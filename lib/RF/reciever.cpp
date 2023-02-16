@@ -2,6 +2,7 @@
 
 
 #include "reciever.hpp"
+#include "../common.h"
 
 
 #define RF95_FREQ 915.0     //Standard frequency for the US
@@ -19,6 +20,8 @@ void SerialMonitorSetup(){
   }
   delay(100); 
 }
+
+
 
 
 
@@ -124,8 +127,18 @@ void PrintBuff(float* buff){
 
 void RF_Task(void* p_arg){  
       // Setup RF
+      RH_RF95 rf95(RFM95_CS, RFM95_INT);
+      RecieverTest(&rf95);
+      uint8_t data[DataBufferSize];
+      float recievebuffer[RecieveBufferSize];
+      uint8_t len = sizeof(data);
       while(1){
             Serial.println("RF Task!");
-            delay(10);
+
+            if(rf95.recv(data, &len)){
+            ParseBuffer(data, recievebuffer, sizeof(recievebuffer));
+            PrintBuff(recievebuffer);
+            }
+            delay(100);
       }
 }
