@@ -4,6 +4,8 @@
 
 #include "reciever.cpp"
 #include "SourDough_Cellular.cpp"
+#include "../lib/common.h"
+
 #include "../lib/common.c"
 
 
@@ -11,29 +13,32 @@ void setup(){
 
      Serial.begin(115200); 
 
-    TaskHandle_t cellularTask;
+    TaskHandle_t cellTask;
     TaskHandle_t rfTask;
-    xMessageBuffer = Message_Buffer_Create_25byte();
-    cellularEventGroup = EventGroupCreate();
+    TaskHandle_t micTask;
+
+    rfEventGroup = EventGroupCreate();
+    recieveMutex = xSemaphoreCreateMutex();
 //Create component tasks
 //CORE 0:
-
-   xTaskCreatePinnedToCore(
-                   &Cellular_Task,   /* Task function. */
-                   "Cellular Task",     /* name of task. */
-                   10240,       /* Stack size of task */
-                   NULL,        /* parameter of the task */
-                   10,           /* priority of the task */
-                   &cellularTask,      /* Task handle to keep track of created task */
-                   0);          /* pin task to core 1 */ 
 //    xTaskCreatePinnedToCore(
-//                    &RF_Task,   /* Task function. */
-//                    "RF Task",     /* name of task. */
+//                    &Cellular_Task,   /* Task function. */
+//                    "Cellular Task",     /* name of task. */
 //                    10240,       /* Stack size of task */
 //                    NULL,        /* parameter of the task */
 //                    10,           /* priority of the task */
-//                    &rfTask,      /* Task handle to keep track of created task */
-//                    0);          /* pin task to core 1 */
+//                    &cellTask,      /* Task handle to keep track of created task */
+//                    0);          /* pin task to core 1 */ 
+   xTaskCreatePinnedToCore(
+                   &RF_Task,   /* Task function. */
+                   "RF Task",     /* name of task. */
+                   10240,       /* Stack size of task */
+                   NULL,        /* parameter of the task */
+                   10,           /* priority of the task */
+                   &rfTask,      /* Task handle to keep track of created task */
+                   0);          /* pin task to core 1 */
+
+
    
 
 }

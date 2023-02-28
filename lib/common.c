@@ -1,17 +1,14 @@
 #include "common.h"
 
-#define BUTTON_GPIO 2
-
-void Message_Buffer_Recieve(MessageBufferHandle_t xMessageBuffer, uint8_t data_array[]){ //TODO: May need to add a mutex to protect reading and writing to the 
+void Message_Buffer_Recieve(MessageBufferHandle_t xMessageBuffer, uint8_t data_array[]){
       size_t xReceivedBytes;
-      xReceivedBytes = xMessageBufferReceive( xMessageBuffer, ( void * ) data_array, DataBufferSize, x100ms);
+      xReceivedBytes = xMessageBufferReceive( xMessageBuffer, ( void * ) data_array, sizeof(*data_array),x100ms);
       return;
 }
 
 
-//This function will create a message buffer of 25 bytes for later
-//Returns the message buffer that was created
-MessageBufferHandle_t Message_Buffer_Create_25byte(){
+//This will create a 16 byte buffer to send speed, lat and long
+MessageBufferHandle_t Message_Buffer_Create_12byte(){
       xMessageBuffer = xMessageBufferCreate(xMessageBufferSizeBytes);
 
       if( xMessageBuffer == NULL ){
@@ -31,9 +28,9 @@ MessageBufferHandle_t Message_Buffer_Create_25byte(){
 void Message_Buffer_Send( MessageBufferHandle_t xMessageBuffer, uint8_t data_array[]){
       size_t xBytesSent;
 
-      xBytesSent = xMessageBufferSend(xMessageBuffer, ( void * ) data_array, DataBufferSize, x100ms);
+      xBytesSent = xMessageBufferSend(xMessageBuffer, ( void * ) data_array, sizeof(*data_array), x100ms);
 
-      if(xBytesSent != DataBufferSize){
+      if(xBytesSent != sizeof(*data_array)){
             // The call to xMessageBufferSend() times out before there was enough
             // space in the buffer for the data to be written.
             Serial.println("The buffer did not allocate space in time\n");
