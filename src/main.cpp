@@ -35,15 +35,21 @@
 
 #include "reciever.cpp"
 #include "SourDough_Cellular.cpp"
+#include "../lib/common.h"
+
+#include "../lib/common.c"
 
 
 void setup(){
 
      Serial.begin(115200); 
 
-    TaskHandle_t gpsTask;
+    TaskHandle_t cellTask;
     TaskHandle_t rfTask;
     TaskHandle_t micTask;
+
+    rfEventGroup = EventGroupCreate();
+    recieveMutex = xSemaphoreCreateMutex();
 //Create component tasks
 //CORE 0:
 //    xTaskCreatePinnedToCore(
@@ -52,7 +58,7 @@ void setup(){
 //                    10240,       /* Stack size of task */
 //                    NULL,        /* parameter of the task */
 //                    10,           /* priority of the task */
-//                    &gpsTask,      /* Task handle to keep track of created task */
+//                    &cellTask,      /* Task handle to keep track of created task */
 //                    0);          /* pin task to core 1 */ 
    xTaskCreatePinnedToCore(
                    &RF_Task,   /* Task function. */
@@ -62,6 +68,8 @@ void setup(){
                    10,           /* priority of the task */
                    &rfTask,      /* Task handle to keep track of created task */
                    0);          /* pin task to core 1 */
+
+
    
 
 }
