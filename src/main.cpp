@@ -49,6 +49,7 @@ void setup(){
     TaskHandle_t micTask;
 
     rfEventGroup = EventGroupCreate();
+    vehicleID_Valid = EventGroupCreate();
     recieveMutex = xSemaphoreCreateMutex();
 //Create component tasks
 //CORE 0:

@@ -16,8 +16,13 @@ const TickType_t x100ms = pdMS_TO_TICKS( 100 );
 
 EventGroupHandle_t rfEventGroup;
 enum rfEventFlagsEnum {
-    updateGPS = 0b1 << 0,
-    sirenDetected = 0b1 << 1
+    updateCellData = 0b1 << 0,
+    updateTrafficData = 0b1 << 1
+};
+
+EventGroupHandle_t vehicleID_Valid;
+enum vehicleIDEnum {
+    HomieValid = 0b1 << 0,
 };
 
 struct Vehicle_Info{
