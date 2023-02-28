@@ -22,6 +22,8 @@ void SerialMonitorSetup(){
 
 
 
+
+
 void RecieverTest(RH_RF95 *rf95){
   Serial.println("Feather LoRa RX Test!");
 
@@ -48,84 +50,56 @@ void RecieverTest(RH_RF95 *rf95){
 }
 
 // Hard coding the size and bounds because we will send the information in the same format every time
-//It goes Lat, Long, Speed, Angle, Second, Minute, Hour, Day, Month, Year
-float * ParseBuffer(uint8_t buffer[], float* result, int size) {
-    uint8_t temparr[4];
-    float temp = 0;
-    int oof = 0;
-    int bounds[10] = {4, 4, 4, 4, 4, 1, 1, 1, 1, 1};
-    int count = 0;
-    int totalcnt = 0;
-
-    for(int j = 0; j < sizeof(size); j++){
-
-        for(int i = 0; i < bounds[count]; i++){
-            temparr[i] = buffer[i + totalcnt];
-            if(bounds[count] == 1){
-              (int)buffer[i + totalcnt];
-            }
-        }
-
-        if(bounds[count] == 1){
-            oof = (int)temparr[0];
-            temp = (float)oof;
-        }
-
-        else{
-        temp = *(float*)temparr;
-        }
-
-        result[j] = temp;
-
-        for(int i = 0; i < 4; i++){
-            temparr[i] = 0;
-        }
-        count++;
-
-        totalcnt = totalcnt + bounds[j];
-    }
-
-    return result;
+//It goes Lat, Long, Speed, vehicle ID
+void ParseBuffer(uint8_t buffer[], Vehicle_Info* result) {
+  uint8_t offset = 0;
+  memcpy((&result->latitude), buffer + offset, sizeof(result->latitude));
+  offset += sizeof(result->latitude);
+  memcpy((&result->longitude), buffer + offset, sizeof(result->longitude));
+  offset += sizeof(result->longitude);
+  memcpy((&result->speed), buffer + offset, sizeof(result->speed));
+  offset += sizeof(result->speed);
+  memcpy((&result->vehicle_id), buffer + offset, sizeof(result->vehicle_id));
+  offset += sizeof(result->vehicle_id);
+  return;
 }
 
 
 //This function is assuming the buffer is the same form as specified in the function above
-void PrintBuff(float* buff){
+void PrintBuff(Vehicle_Info* buff){
   Serial.print("Latitude: ");
-  Serial.print(buff[0]);
+  Serial.print(buff->latitude, 14);
   Serial.print("   ");
   Serial.print("Longitude: ");
-  Serial.print(buff[1]);
+  Serial.print(buff->longitude, 14);
   Serial.println();
 
   Serial.print("Speed: ");
-  Serial.print(buff[2]);
+  Serial.print(buff->speed);
   Serial.println();
 
-  Serial.print("Angle: ");
-  Serial.print(buff[3]);
+  Serial.print("VehicleID: ");
+  Serial.print(buff->vehicle_id);
   Serial.println();
-
-  Serial.print("TimeStamp: ");
-  Serial.print(buff[8]);
-  Serial.print("/");
-  Serial.print(buff[7]);
-  Serial.print("/");
-  Serial.print(buff[9]);
-  Serial.print("     ");
-  Serial.print(buff[6]);
-  Serial.print(": ");
-  Serial.print(buff[5]);
-  Serial.print(": ");
-  Serial.println(buff[4]);
   Serial.println("--------------------------------------------------------------------");
+
 
 }
 
 void RF_Task(void* p_arg){  
       // Setup RF
+      RH_RF95 rf95(RFM95_CS, RFM95_INT);
+      RecieverTest(&rf95);
+      uint8_t data[DataBufferSize];
+      uint8_t len = sizeof(data);
       while(1){
-            Serial.println("RF Task!");
-            delay(10);
+            //Serial.println("RF Task!");
+
+            if(rf95.recv(data, &len)){
+            ParseBuffer(data, &recievebuffer);
+            PrintBuff(&recievebuffer);
+            }
+            // delay(100);
+            vTaskDelay(x100ms);
       }
 }
