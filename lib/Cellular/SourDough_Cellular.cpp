@@ -30,7 +30,6 @@ void Cellular_Setup(Notecard *NOTE) {
         NoteRequest(req);
     }
 
-
     // Wait for Connected is True message
     const char * status = "connected";
     J *rsp = NULL;
