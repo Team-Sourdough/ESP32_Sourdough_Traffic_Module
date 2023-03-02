@@ -16,6 +16,7 @@ void Cellular_Setup(Notecard *NOTE) {
     NOTE->begin(txRxPinsSerial, 9600);
     NOTE->setDebugOutputStream(usbSerial);
 
+    // Begin connection to Nothub
     J *req = NoteNewRequest("hub.set");
     if (req != NULL) {
         JAddStringToObject(req, "mode", "continuous");
@@ -29,8 +30,9 @@ void Cellular_Setup(Notecard *NOTE) {
         NoteRequest(req);
     }
 
-    const char * status = "connected";
 
+    // Wait for Connected is True message
+    const char * status = "connected";
     J *rsp = NULL;
     J *rsp_body = JGetObjectItem(rsp, status);
     const char *json_body = JPrintUnformatted(rsp_body);
@@ -50,25 +52,29 @@ void Cellular_Setup(Notecard *NOTE) {
         else {
             usbSerial.println("RESPONSE: NOT CONNECTED!");
         }
-
         delay(10000);
     }
 
-    char *json = JPrintUnformatted(rsp);
-
-    usbSerial.print("FULL RESPONSE: ");
-    usbSerial.println(json);
-
     NoteDeleteResponse(rsp);
+    return;
 }
 
-void Cellular_Send(Notecard *NOTE, uint8_t rfDataArray[]) {
+void Cellular_Send(Notecard *NOTE) {
 
+    // Make local copy of received GPS data
+    GPSdata localGPSdata;
+    localGPSdata.latitude = recievebuffer.latitude;
+    localGPSdata.longitude = recievebuffer.latitude;
+    localGPSdata.speed = recievebuffer.speed;
+    localGPSdata.vehicle_id = recievebuffer.vehicle_id;
+
+    // Start sending data to server
     J *rsp = NULL;
     J *rsp_body = JGetObjectItem(rsp, "result");
     char *json_body = JPrintUnformatted(rsp_body);
     char *json = JPrintUnformatted(rsp);
 
+    // Wait for either a valid (200) or not-valid (500) response
     while (strcmp(json_body,"200") | strcmp(json_body,"500")) {
         J *req = NoteNewRequest("web.post");
         JAddStringToObject(req, "route", "Sourdough_ping");
@@ -77,12 +83,10 @@ void Cellular_Send(Notecard *NOTE, uint8_t rfDataArray[]) {
             JAddBoolToObject(req, "sync", true);
             J *body = JAddObjectToObject(req, "body");
             if (body) {
-                JAddNumberToObject(body, "VehicleID", 12);
-                JAddNumberToObject(body, "LightID", 10);
-                JAddNumberToObject(body, "x", 10);
-                JAddNumberToObject(body, "y", 10);
-                JAddStringToObject(body, "Drivers", "Wiggles");
-                JAddStringToObject(body, "VehicleType", "Firetruck");
+                JAddNumberToObject(body, "VehicleID", localGPSdata.vehicle_id);
+                JAddNumberToObject(body, "Latitude", localGPSdata.latitude);
+                JAddNumberToObject(body, "Longitude", localGPSdata.longitude);
+                JAddNumberToObject(body, "Speed", localGPSdata.speed);
             }
 
             usbSerial.println("----------------------- Waiting for Response -----------------------");
@@ -90,8 +94,8 @@ void Cellular_Send(Notecard *NOTE, uint8_t rfDataArray[]) {
             rsp_body = JGetObjectItem(rsp, "result");
             json_body = JPrintUnformatted(rsp_body);
             
-            if(!strcmp(json_body,"200")) {
-                xEventGroupSetBits(cellularEventGroup, verified_found);
+            if(!strcmp(json_body,"200") & !HomieValid) {
+                xEventGroupSetBits(vehicleID_Valid, HomieValid);
                 usbSerial.print("VERFIED VEHICLE FOUND! Response: ");
                 usbSerial.println(json_body);
             }
@@ -104,24 +108,23 @@ void Cellular_Send(Notecard *NOTE, uint8_t rfDataArray[]) {
             }
     }
     NoteDeleteResponse(rsp);
+    return;
 }
 
 void Cellular_Task(void* p_arg){  
 
     Notecard NOTE;
-    bool send_data = 0;
     EventBits_t eventFlags;
-    uint8_t rfDataArray[DataBufferSize];
 
     Serial.println("Setup Cellular!");
     Cellular_Setup(&NOTE);
     
     while(1){
-        eventFlags = xEventGroupWaitBits(cellularEventGroup, sendData, pdFALSE, pdFALSE, EVENT_GROUP_PEND_BLOCKING);
+        eventFlags = xEventGroupWaitBits(rfEventGroup, updateCellData, pdFALSE, pdFALSE, portMAX_DELAY);
 
 
-        if(send_data){
-            Cellular_Send(&NOTE,&rfDataArray[DataBufferSize]);
+        if(eventFlags){
+            Cellular_Send(&NOTE);
         }
         delay(10000);
     }
