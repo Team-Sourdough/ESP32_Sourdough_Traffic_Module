@@ -1,34 +1,3 @@
-
-// TaskHandle_t testTask2;
-
-//void IRAM_ATTR onTimer(){
-//  Serial.println("A minute has passed");
-//}
-//t_idle: idles the system for both cores when nothing is happening
-// void Task1_Handler(void * arg){
-//  Serial.println("Inside Task1");
-//  while(1){
-//    Serial.println("task1 running");
-//    vTaskDelay(1);
-//  } 
-// }
-// void Task2_Handler(void * arg){
-//  Serial.println("Inside Task2");
-//  for(;;){
-//    Serial.println("task2 running");
-//    vTaskDelay(1);
-//  } 
-// }
-//
-//void setup() {
-//   
-//}
-//void loop() {
-//    Serial.print("test ");
-//    Serial.println(__FILE__);
-//    delay(1000);
-//}
-
 #include <FreeRTOS.h>
 #include <task.h>
 #include <Arduino.h>

@@ -2,6 +2,7 @@
 #define SourDough_Cellular
 
 #include <Notecard.h>
+#include "../common.h"
 
 #define NOTE_PRODUCT_UID "edu.colorado.sare3396:safeguard"
 
@@ -13,5 +14,11 @@ void Cellular_Send(Notecard *NOTE);
 
 void Cellular_Task(void* p_arg);
 
+struct GPSdata{
+    float latitude;
+    float longitude;
+    float speed;
+    uint16_t vehicle_id;
+};
 
 #endif
