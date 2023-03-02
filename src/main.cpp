@@ -70,7 +70,9 @@ void setup(){
                    &rfTask,      /* Task handle to keep track of created task */
                    0);          /* pin task to core 1 */
 
-
+//We should clear all of our flags, for some reason I see that some of them are high before they should be
+xEventGroupClearBits(rfEventGroup, (updateCellData | updateTrafficData));
+xEventGroupClearBits(vehicleID_Valid, HomieValid);
    
 
 }
