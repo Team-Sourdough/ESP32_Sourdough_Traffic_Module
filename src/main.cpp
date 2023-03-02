@@ -53,14 +53,14 @@ void setup(){
     recieveMutex = xSemaphoreCreateMutex();
 //Create component tasks
 //CORE 0:
-//    xTaskCreatePinnedToCore(
-//                    &Cellular_Task,   /* Task function. */
-//                    "Cellular Task",     /* name of task. */
-//                    10240,       /* Stack size of task */
-//                    NULL,        /* parameter of the task */
-//                    10,           /* priority of the task */
-//                    &cellTask,      /* Task handle to keep track of created task */
-//                    0);          /* pin task to core 1 */ 
+   xTaskCreatePinnedToCore(
+                   &Cellular_Task,   /* Task function. */
+                   "Cellular Task",     /* name of task. */
+                   10240,       /* Stack size of task */
+                   NULL,        /* parameter of the task */
+                   10,           /* priority of the task */
+                   &cellTask,      /* Task handle to keep track of created task */
+                   0);          /* pin task to core 1 */ 
    xTaskCreatePinnedToCore(
                    &RF_Task,   /* Task function. */
                    "RF Task",     /* name of task. */
@@ -73,8 +73,6 @@ void setup(){
 //We should clear all of our flags, for some reason I see that some of them are high before they should be
 xEventGroupClearBits(rfEventGroup, (updateCellData | updateTrafficData));
 xEventGroupClearBits(vehicleID_Valid, HomieValid);
-   
-
 }
 
 void loop(){
