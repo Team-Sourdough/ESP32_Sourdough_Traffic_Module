@@ -94,14 +94,23 @@ void Cellular_Send(Notecard *NOTE) {
             rsp_body = JGetObjectItem(rsp, "result");
             json_body = JPrintUnformatted(rsp_body);
             
+            // Valid Vehicle and valid flag not set
             if(!strcmp(json_body,"200") & !HomieValid) {
                 xEventGroupSetBits(vehicleID_Valid, HomieValid);
-                usbSerial.print("VERFIED VEHICLE FOUND! Response: ");
+                usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
                 usbSerial.println(json_body);
+                xEventGroupClearBits(rfEventGroup,updateCellData);
             }
+            // InValid Vehicle
             else if(!strcmp(json_body,"500")) {
-                usbSerial.print("UNIDENTIFIED VEHICLE! Response: ");
+                usbSerial.print("INVALID VEHICLE! Response: ");
                 usbSerial.println(json_body);
+                xEventGroupClearBits(rfEventGroup,updateCellData);
+            }
+            // Valid Vehicle and valid flag set
+            else if(!strcmp(json_body,"200")){
+                usbSerial.print("DATA SENT!");
+                xEventGroupClearBits(rfEventGroup,updateCellData);
             }
 
             delay(20000);
@@ -121,7 +130,6 @@ void Cellular_Task(void* p_arg){
     
     while(1){
         eventFlags = xEventGroupWaitBits(rfEventGroup, updateCellData, pdFALSE, pdFALSE, portMAX_DELAY);
-
 
         if(eventFlags){
             Cellular_Send(&NOTE);
