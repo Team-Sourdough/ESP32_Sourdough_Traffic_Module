@@ -2,6 +2,7 @@
 #define COMMON_HG
 
 #include <FreeRTOS.h>
+#include <Arduino.h>
 #include <message_buffer.h>
 #include <event_groups.h>
 #include <semphr.h>
