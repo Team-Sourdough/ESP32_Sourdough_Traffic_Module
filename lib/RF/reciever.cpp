@@ -5,7 +5,7 @@
 
 
 #define RF95_FREQ 915.0     //Standard frequency for the US
-#define RFM95_RST     5    // Marked as RST on the LoRa Radio. This is the reset pin
+#define RFM95_RST     14    // Marked as RST on the LoRa Radio. This is the reset pin
 #define RFM95_CS      10   // Marked as CS on the LoRa Radio. This is the chip select
 #define RFM95_INT     4   //Marked as G0 on the LoRa Radio. This is the interrupt pin
 #define LED 13
@@ -22,10 +22,17 @@ void SerialMonitorSetup(){
 
 
 
-
+#define EAST_RED 39
+#define EAST_YELLOW 40
+#define EAST_GREEN 41
 
 void RecieverTest(RH_RF95 *rf95){
   Serial.println("Feather LoRa RX Test!");
+
+      pinMode(EAST_RED, OUTPUT);
+      pinMode(EAST_GREEN, OUTPUT);
+      digitalWrite(EAST_RED,LOW);
+      digitalWrite(EAST_GREEN,LOW);
 
   // manual reset
   digitalWrite(RFM95_RST, LOW);
@@ -35,15 +42,18 @@ void RecieverTest(RH_RF95 *rf95){
   
   while (!rf95->init()) {
     Serial.println("LoRa radio init failed");
+    digitalWrite(EAST_RED,HIGH);
     Serial.println("Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info");
     while (1);
   }
   Serial.println("LoRa radio init OK!");
 
   if (!rf95->setFrequency(RF95_FREQ)) {
+    digitalWrite(EAST_RED,HIGH);
     Serial.println("setFrequency failed");
     while (1);
   }
+  digitalWrite(EAST_GREEN,HIGH);
   Serial.print("Set Freq to: "); 
   Serial.println(RF95_FREQ);
   
@@ -98,8 +108,8 @@ void RF_Task(void* p_arg){
             if(rf95.recv(data, &len)){
             ParseBuffer(data, &recievebuffer);
             PrintBuff(&recievebuffer);
+            digitalWrite(EAST_RED, HIGH);
             }
-            // delay(100);
             vTaskDelay(x100ms);
       }
 }

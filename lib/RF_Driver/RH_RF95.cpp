@@ -13,7 +13,7 @@
     #define INTERRUPT_ATTR
 #endif
 
-// #define SERIAL_DEBUG // Uncomment to recieve debug information over serial
+#define SERIAL_DEBUG // Uncomment to recieve debug information over serial
 
 // Interrupt vectors for the 3 Arduino interrupt pins
 // Each interrupt can be handled by a different instance of RH_RF95, allowing you to have
@@ -74,7 +74,7 @@ bool RH_RF95::init()
     spiWrite(RH_RF95_REG_01_OP_MODE, RH_RF95_MODE_SLEEP | RH_RF95_LONG_RANGE_MODE);
     delay(10); // Wait for sleep mode to take over from say, CAD
     // Check we are in sleep mode, with LORA set
-    if (spiRead(RH_RF95_REG_01_OP_MODE) != (RH_RF95_MODE_SLEEP | RH_RF95_LONG_RANGE_MODE))
+    if (spiRead(RH_RF95_REG_01_OP_MODE) == (RH_RF95_MODE_SLEEP | RH_RF95_LONG_RANGE_MODE))
     {
       #ifdef SERIAL_DEBUG
         Serial.println(F("ERROR: Failed to put device in LoRa mode."));
