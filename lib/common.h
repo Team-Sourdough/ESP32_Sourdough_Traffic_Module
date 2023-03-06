@@ -16,7 +16,7 @@ const TickType_t x100ms = pdMS_TO_TICKS( 100 );
 
 EventGroupHandle_t rfEventGroup;
 enum rfEventFlagsEnum {
-    updateCellData = 0b1 << 0,
+    updateCellData = 0b0 << 0,
     updateTrafficData = 0b1 << 1
 };
 

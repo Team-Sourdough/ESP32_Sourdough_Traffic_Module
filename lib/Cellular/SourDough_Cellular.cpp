@@ -1,8 +1,10 @@
 #include <SourDough_Cellular.hpp>
+#include <string.h>
 
 #define INBOUND_QUEUE_COMMAND_FIELD "my-request-type"
  
 void Cellular_Setup(Notecard *NOTE) {
+
 
     usbSerial.begin(115200);
     while (!usbSerial) {
@@ -14,12 +16,12 @@ void Cellular_Setup(Notecard *NOTE) {
     NOTE->begin(txRxPinsSerial, 9600);
     NOTE->setDebugOutputStream(usbSerial);
 
+    // Begin connection to Nothub
     J *req = NoteNewRequest("hub.set");
     if (req != NULL) {
         JAddStringToObject(req, "mode", "continuous");
         JAddStringToObject(req, "product", NOTE_PRODUCT_UID);
         JAddBoolToObject(req, "sync", true);
-        //NOTE->sendRequest(req);
         NoteRequest(req);
     }
     req = NoteNewRequest("hub.sync");
@@ -27,59 +29,111 @@ void Cellular_Setup(Notecard *NOTE) {
         JAddBoolToObject(req, "allow", true);
         NoteRequest(req);
     }
-    req = NoteNewRequest("hub.sync.status");
-    if (req != NULL) {
-        JAddBoolToObject(req, "sync", true);
-        NoteRequest(req);
+
+
+    // Wait for Connected is True message
+    const char * status = "connected";
+    J *rsp = NULL;
+    J *rsp_body = JGetObjectItem(rsp, status);
+    const char *json_body = JPrintUnformatted(rsp_body);
+
+    usbSerial.print("RESPONSE: Connected is ");
+
+    while (strcmp(json_body,"true")) {
+        req = NoteNewRequest("hub.status");
+        usbSerial.println("waiting for connection.....");
+        rsp = NoteRequestResponse(req);
+        rsp_body = JGetObjectItem(rsp, status);
+        json_body = JPrintUnformatted(rsp_body);
+        
+        if(!strcmp(json_body,"true")){
+            usbSerial.print("RESPONSE: CONNECTED!");
+        }
+        else {
+            usbSerial.println("RESPONSE: NOT CONNECTED!");
+        }
+        delay(10000);
     }
+
+    NoteDeleteResponse(rsp);
+    return;
 }
 
 void Cellular_Send(Notecard *NOTE) {
-  // put your main code here, to run repeatedly:
-  int vehicle_id = 1000;
-  int light_id = 1000;
 
-    J *req = NoteNewRequest("web.post");
-    JAddStringToObject(req, "route", "Sourdough_ping");
+    // Make local copy of received GPS data
+    GPSdata localGPSdata;
+    localGPSdata.latitude = recievebuffer.latitude;
+    localGPSdata.longitude = recievebuffer.latitude;
+    localGPSdata.speed = recievebuffer.speed;
+    localGPSdata.vehicle_id = recievebuffer.vehicle_id;
 
-    if (req != NULL) {
-        JAddBoolToObject(req, "sync", true);
-        J *body = JAddObjectToObject(req, "body");
-        if (body) {
-            JAddNumberToObject(body, "VehicleID", vehicle_id);
-            JAddNumberToObject(body, "LightID", light_id);
-        }
+    // Start sending data to server
+    J *rsp = NULL;
+    J *rsp_body = JGetObjectItem(rsp, "result");
+    char *json_body = JPrintUnformatted(rsp_body);
+    char *json = JPrintUnformatted(rsp);
 
-        NoteRequest(req);
+    // Wait for either a valid (200) or not-valid (500) response
+    while (strcmp(json_body,"200") | strcmp(json_body,"500")) {
+        J *req = NoteNewRequest("web.post");
+        JAddStringToObject(req, "route", "Sourdough_ping");
 
-        //J *rsp = NOTE->requestAndResponse(req);
+        if(req != NULL){
+            JAddBoolToObject(req, "sync", true);
+            J *body = JAddObjectToObject(req, "body");
+            if (body) {
+                JAddNumberToObject(body, "VehicleID", localGPSdata.vehicle_id);
+                JAddNumberToObject(body, "Latitude", localGPSdata.latitude);
+                JAddNumberToObject(body, "Longitude", localGPSdata.longitude);
+                JAddNumberToObject(body, "Speed", localGPSdata.speed);
+            }
 
-        // if (rsp != NULL) {
-        //     // if(NOTE->responseError(rsp)){
-        //     //     NOTE->deleteResponse(rsp);
-        //     // }
-        //     //else {
-        //         J *rsp_body = JGetObject(rsp, "body");
-        //         if (rsp_body != NULL) {
-        //             char *response = JGetString(rsp_body, INBOUND_QUEUE_COMMAND_FIELD);
-        //             NOTE->logDebugf("INBOUND REQUEST: %s\n\n", response);
-        //         }
-        //     //}
-        // }
-        // NOTE->deleteResponse(rsp);
-        delay(15000);
+            usbSerial.println("----------------------- Waiting for Response -----------------------");
+            rsp = NoteRequestResponse(req);
+            rsp_body = JGetObjectItem(rsp, "result");
+            json_body = JPrintUnformatted(rsp_body);
+            
+            // Valid Vehicle and valid flag not set
+            if(!strcmp(json_body,"200") & !HomieValid) {
+                xEventGroupSetBits(vehicleID_Valid, HomieValid);
+                usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
+                usbSerial.println(json_body);
+                xEventGroupClearBits(rfEventGroup,updateCellData);
+            }
+            // InValid Vehicle
+            else if(!strcmp(json_body,"500")) {
+                usbSerial.print("INVALID VEHICLE! Response: ");
+                usbSerial.println(json_body);
+                xEventGroupClearBits(rfEventGroup,updateCellData);
+            }
+            // Valid Vehicle and valid flag set
+            else if(!strcmp(json_body,"200")){
+                usbSerial.print("DATA SENT!");
+                xEventGroupClearBits(rfEventGroup,updateCellData);
+            }
+
+            delay(20000);
+            }
     }
-    
+    NoteDeleteResponse(rsp);
+    return;
 }
 
- void Cellular_Task(void* p_arg){  
-      // Setup RF
-      Notecard NOTE;
-      Cellular_Setup(&NOTE);
-      Cellular_Send(&NOTE);
-      Serial.println("Setup Cellular");
-      while(1){
-            Serial.println("Cellular Task!");
-            delay(10);
-      }
+void Cellular_Task(void* p_arg){  
+
+    Notecard NOTE;
+    EventBits_t eventFlags;
+
+    Serial.println("Setup Cellular!");
+    Cellular_Setup(&NOTE);
+    
+    while(1){
+        eventFlags = xEventGroupWaitBits(rfEventGroup, updateCellData, pdFALSE, pdFALSE, portMAX_DELAY);
+
+        if(eventFlags){
+            Cellular_Send(&NOTE);
+        }
+        delay(10000);
+    }
 }
