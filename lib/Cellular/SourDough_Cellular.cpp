@@ -37,8 +37,6 @@ void Cellular_Setup(Notecard *NOTE) {
     J *rsp_body = JGetObjectItem(rsp, status);
     const char *json_body = JPrintUnformatted(rsp_body);
 
-    usbSerial.print("RESPONSE: Connected is ");
-
     while (strcmp(json_body,"true")) {
         req = NoteNewRequest("hub.status");
         usbSerial.println("waiting for connection.....");
@@ -54,8 +52,6 @@ void Cellular_Setup(Notecard *NOTE) {
         }
         delay(10000);
     }
-
-    NoteDeleteResponse(rsp);
     return;
 }
 
@@ -87,6 +83,7 @@ void Cellular_Send(Notecard *NOTE) {
                 JAddNumberToObject(body, "Latitude", localGPSdata.latitude);
                 JAddNumberToObject(body, "Longitude", localGPSdata.longitude);
                 JAddNumberToObject(body, "Speed", localGPSdata.speed);
+                JAddNumberToObject(body, "LightID", 1);
             }
 
             usbSerial.println("----------------------- Waiting for Response -----------------------");
@@ -100,23 +97,25 @@ void Cellular_Send(Notecard *NOTE) {
                 usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
                 usbSerial.println(json_body);
                 xEventGroupClearBits(rfEventGroup,updateCellData);
+                return;
             }
             // InValid Vehicle
             else if(!strcmp(json_body,"500")) {
                 usbSerial.print("INVALID VEHICLE! Response: ");
                 usbSerial.println(json_body);
                 xEventGroupClearBits(rfEventGroup,updateCellData);
+                return;
             }
             // Valid Vehicle and valid flag set
-            else if(!strcmp(json_body,"200")){
-                usbSerial.print("DATA SENT!");
+            else if(!strcmp(json_body,"200") & HomieValid){
+                usbSerial.println("DATA SENT!");
                 xEventGroupClearBits(rfEventGroup,updateCellData);
+                return;
             }
 
             delay(20000);
             }
     }
-    NoteDeleteResponse(rsp);
     return;
 }
 
@@ -129,11 +128,15 @@ void Cellular_Task(void* p_arg){
     Cellular_Setup(&NOTE);
     
     while(1){
+
         eventFlags = xEventGroupWaitBits(rfEventGroup, updateCellData, pdFALSE, pdFALSE, portMAX_DELAY);
 
         if(eventFlags){
             Cellular_Send(&NOTE);
         }
+        xEventGroupClearBits(rfEventGroup,updateCellData);
+
+
         delay(10000);
     }
 }

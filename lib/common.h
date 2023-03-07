@@ -4,6 +4,7 @@
 #include <FreeRTOS.h>
 #include <message_buffer.h>
 #include <event_groups.h>
+#include <semphr.h>
 
 //This buffer will be used to send the RF recieved data to the Cellular task to actually send that bitch
 MessageBufferHandle_t xMessageBuffer;
@@ -16,7 +17,7 @@ const TickType_t x100ms = pdMS_TO_TICKS( 100 );
 
 EventGroupHandle_t rfEventGroup;
 enum rfEventFlagsEnum {
-    updateCellData = 0b0 << 0,
+    updateCellData = 0b1 << 0,
     updateTrafficData = 0b1 << 1
 };
 

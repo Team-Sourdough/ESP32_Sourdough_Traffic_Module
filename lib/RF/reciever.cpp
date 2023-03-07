@@ -101,7 +101,7 @@ void RF_Task(void* p_arg){
 
             if(rf95.recv(data, &len)){
             ParseBuffer(data, &recievebuffer);
-            PrintBuff(&recievebuffer);
+            //PrintBuff(&recievebuffer);
             }
             // delay(100);
             vTaskDelay(x100ms);
