@@ -134,8 +134,6 @@ void Cellular_Task(void* p_arg){
         if(eventFlags){
             Cellular_Send(&NOTE);
         }
-        xEventGroupClearBits(rfEventGroup,updateCellData);
-
 
         delay(10000);
     }
