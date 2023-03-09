@@ -71,8 +71,6 @@ Intersection::Intersection(IntersectionState startState, float latitude, float l
 
 
 
-
-
 void Traffic_Task(void* p_arg){
       constexpr float intersectionLatitude = 40.000113;
       constexpr float intersectionLongitude = -105.236410;

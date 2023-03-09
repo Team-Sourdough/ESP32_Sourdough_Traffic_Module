@@ -37,9 +37,9 @@ struct Vehicle_Info{
 //We want all the tasks to be able to access this because this is shared data among the 3 tasks
 
 EventGroupHandle_t EventGroupCreate();
-Vehicle_Info recievebuffer;
+Vehicle_Info vehicleData;
 
-static SemaphoreHandle_t recieveMutex; 
+static SemaphoreHandle_t vehicleDataMutex; 
 
 
 #endif

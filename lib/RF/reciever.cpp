@@ -100,8 +100,8 @@ void RF_Task(void* p_arg){
             //Serial.println("RF Task!");
 
             if(rf95.recv(data, &len)){
-            ParseBuffer(data, &recievebuffer);
-            //PrintBuff(&recievebuffer);
+              ParseBuffer(data, &vehicleData);
+              PrintBuff(&vehicleData);
             }
             // delay(100);
             vTaskDelay(x100ms);
