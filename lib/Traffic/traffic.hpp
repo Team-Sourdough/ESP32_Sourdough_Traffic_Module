@@ -55,10 +55,22 @@ class TrafficLight {
         TrafficLightState _currentState{TrafficLightState::UNKNOWN}; //0 will be checked as a non-valid value (must be initialized at some point to red or green)
 };
 
+enum class IntersectionState {
+    UNKNOWN = 0,
+    NORTH_SOUTH = 1,
+    EAST_WEST = 2
+};
+
 class Intersection {
     public:
-        Intersection(float latitude, float longitude);
+        Intersection(IntersectionState startState, float latitude, float longitude);
         ~Intersection() = default;
+
+        void changeTrafficDirection();
+        void holdCurrentDirection();
+
+        void setCurrentState(IntersectionState newState);
+        void getCurrentState(IntersectionState *currentState);
 
         std::unique_ptr<TrafficLight> north;
         std::unique_ptr<TrafficLight> south;
@@ -68,6 +80,7 @@ class Intersection {
     private: 
         float _latitude;
         float _longitude;
+        IntersectionState _currentState;
 
 };
 
