@@ -1,6 +1,5 @@
 #include "traffic.hpp"
 
-
 void setupTrafficLights(){
       pinMode(NORTH_RED, OUTPUT);
       pinMode(NORTH_YELLOW, OUTPUT);
@@ -14,19 +13,52 @@ void setupTrafficLights(){
       pinMode(WEST_RED, OUTPUT);
       pinMode(WEST_YELLOW, OUTPUT);
       pinMode(WEST_GREEN, OUTPUT);
+}
 
-      // ON(NORTH_RED);
-      // ON(NORTH_YELLOW);
-      // ON(NORTH_GREEN);
-      // ON(SOUTH_RED);
-      // ON(SOUTH_YELLOW);
-      // ON(SOUTH_GREEN);
-      // ON(EAST_RED);
-      // ON(EAST_YELLOW);
-      // ON(EAST_GREEN);
-      // ON(WEST_RED);
-      // ON(WEST_YELLOW);
-      // ON(WEST_GREEN);
+//------------------------TRAFFIC LIGHT CLASS DEFINES---------------------------------------------------//
+void TrafficLight::setCurrentState(TrafficLightState newState){
+      _currentState = newState;
+
+      switch(_currentState){ //Turn appropriate lights on/off
+            case TrafficLightState::GREEN_LIGHT:
+                  ON(_greenLight);
+                  OFF(_yellowLight);
+                  OFF(_redLight);
+                  break;
+            case TrafficLightState::YELLOW_LIGHT:
+                  OFF(_greenLight);
+                  ON(_yellowLight);
+                  OFF(_redLight);
+                  break;
+            case TrafficLightState::RED_LIGHT:
+                  OFF(_greenLight);
+                  OFF(_yellowLight);
+                  ON(_redLight);
+                  break;
+            default:
+                  Serial.println("Unknown traffic light state");
+                  break;
+
+      }
+}
+void TrafficLight::getCurrentState(TrafficLightState *currentState){
+      *currentState = _currentState;
+} 
+
+//------------------------INTERSECTION CLASS DEFINES---------------------------------------------------//
+//Constructs an intersection object and creates all the traffic light sub classes
+Intersection::Intersection(float latitude, float longitude) : _latitude(latitude), _longitude(longitude){
+      setupTrafficLights(); //Sets pins as OUTPUT
+      north = make_unique<TrafficLight>(NORTH_RED, NORTH_YELLOW, NORTH_GREEN); 
+      south = make_unique<TrafficLight>(SOUTH_RED, SOUTH_YELLOW, SOUTH_GREEN);
+      east =  make_unique<TrafficLight>(EAST_RED, EAST_YELLOW, EAST_GREEN);
+      west =  make_unique<TrafficLight>(WEST_RED, WEST_YELLOW, WEST_GREEN);
+
+      //Make north/south starting as green light
+      north->setCurrentState(TrafficLightState::GREEN_LIGHT);
+      south->setCurrentState(TrafficLightState::GREEN_LIGHT);
+      east->setCurrentState(TrafficLightState::RED_LIGHT);
+      west->setCurrentState(TrafficLightState::RED_LIGHT);
 }
 
 
@@ -34,10 +66,14 @@ void setupTrafficLights(){
 
 
 void Traffic_Task(void* p_arg){
-      setupTrafficLights();
-       while(1){
+      constexpr float intersectionLatitude = 40.000113;
+      constexpr float intersectionLongitude = -105.236410;
+      static Intersection intersection(intersectionLatitude, intersectionLongitude); //only create once
+      while(1){ //Fatty state machine
             xEventGroupClearBits(vehicleID_Valid,HomieValid);
             vTaskDelay(x100ms);
-
+      
+            
+            
       }
 }
