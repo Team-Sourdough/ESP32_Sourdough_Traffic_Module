@@ -66,7 +66,7 @@ class Intersection {
         Intersection(IntersectionState startState, float latitude, float longitude);
         ~Intersection() = default;
 
-        void calculateTransition(int *startCycleThreshold, int *cycleTime); //threshold (m/s), cycletime (ms)
+        void updateTransitionInfo(); //threshold (m/s), cycletime (ms)
         float calculateDistance(float vehicleLat, float vehicleLong);
         void changeTrafficDirection(int startCycleThreshold, int cycleTime);
         void holdCurrentDirection();
@@ -88,7 +88,6 @@ class Intersection {
         int _cycleTransitionTime;
         IntersectionState _currentState;
 
-        
         float _calculateBearing(float vehicleLat, float vehicleLong); 
 
 };

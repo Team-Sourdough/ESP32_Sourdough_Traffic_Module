@@ -75,7 +75,7 @@ float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
 
 }
 
-void Intersection::changeTrafficDirection(int startCycleThreshold, int cycleTime){
+void Intersection::changeTrafficDirection(int cycleTime){
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
 
@@ -113,6 +113,7 @@ void Traffic_Task(void* p_arg){
 
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
                   //Clear updateTrafficData flag
+
             }
             //Wait on homie valid
             if(HomieValid & eventFlags){
