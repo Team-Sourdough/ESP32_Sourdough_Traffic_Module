@@ -69,14 +69,57 @@ Intersection::Intersection(IntersectionState startState, float latitude, float l
       }
 }
 
+float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
+      //NOTE: intersection lat and long can be accessed through _latitude and _longitude 
+      //Paste distance calculations 
+
+}
+
+void Intersection::changeTrafficDirection(int startCycleThreshold, int cycleTime){
+      switch(_currentState){
+            case IntersectionState::NORTH_SOUTH:
+
+                  break;
+            case IntersectionState::EAST_WEST:
+                  break;
+            default:
+                  Serial.println("Unknown intersection state");
+                  break;
+      }
+}
+
 
 
 void Traffic_Task(void* p_arg){
       constexpr float intersectionLatitude = 40.000113;
       constexpr float intersectionLongitude = -105.236410;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
+
+      EventBits_t eventFlags;
       while(1){ //Fatty state machine
-            xEventGroupClearBits(vehicleID_Valid,HomieValid);
+            
+            eventFlags = xEventGroupWaitBits(rfEventGroup, (updateTrafficData | HomieValid), pdFALSE, pdFALSE, portMAX_DELAY);
+            //Update a copy of the vehicle data
+            if(updateTrafficData & eventFlags){
+                  //Take mutex
+
+                  intersection.approachVehicle = {
+                        .latitude = vehicleData.latitude,
+                        .longitude = vehicleData.longitude,
+                        .speed = vehicleData.speed,
+                        .vehicle_id = vehicleData.vehicle_id
+                  };
+                  //Release Mutex
+
+                  intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
+                  //Clear updateTrafficData flag
+            }
+            //Wait on homie valid
+            if(HomieValid & eventFlags){
+                  intersection.safeGuard();
+            }
+
+            xEventGroupClearBits(vehicleID_Valid, HomieValid);
             vTaskDelay(x100ms);
       
             

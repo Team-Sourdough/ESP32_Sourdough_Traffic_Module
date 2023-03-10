@@ -55,7 +55,7 @@ class TrafficLight {
         TrafficLightState _currentState{TrafficLightState::UNKNOWN}; //0 will be checked as a non-valid value (must be initialized at some point to red or green)
 };
 
-enum class IntersectionState {
+enum class IntersectionState { //Defines green lights configuration
     UNKNOWN = 0,
     NORTH_SOUTH = 1,
     EAST_WEST = 2
@@ -66,7 +66,9 @@ class Intersection {
         Intersection(IntersectionState startState, float latitude, float longitude);
         ~Intersection() = default;
 
-        void changeTrafficDirection();
+        void calculateTransition(int *startCycleThreshold, int *cycleTime); //threshold (m/s), cycletime (ms)
+        float calculateDistance(float vehicleLat, float vehicleLong);
+        void changeTrafficDirection(int startCycleThreshold, int cycleTime);
         void holdCurrentDirection();
 
         void setCurrentState(IntersectionState newState);
@@ -77,15 +79,23 @@ class Intersection {
         std::unique_ptr<TrafficLight> west;
         std::unique_ptr<TrafficLight> east;
 
+        Vehicle_Info approachVehicle;
+
     private: 
         float _latitude;
         float _longitude;
+        int _startCycleThreshold;
+        int _cycleTransitionTime;
         IntersectionState _currentState;
+
+        
+        float _calculateBearing(float vehicleLat, float vehicleLong); 
 
 };
 
 
 void Traffic_Task(void* p_arg);
 void setupTrafficLights();
+
 
 #endif
