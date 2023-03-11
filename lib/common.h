@@ -4,6 +4,7 @@
 #include <FreeRTOS.h>
 #include <message_buffer.h>
 #include <event_groups.h>
+#include <semphr.h>
 
 //This buffer will be used to send the RF recieved data to the Cellular task to actually send that bitch
 MessageBufferHandle_t xMessageBuffer;
