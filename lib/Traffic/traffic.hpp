@@ -94,26 +94,36 @@ class Intersection {
         void changeTrafficDirection();
         void holdCurrentDirection();
 
+        void setThreshold();
+        int getThreshold();
         void setCurrentState(IntersectionState newState);
         void getCurrentState(IntersectionState *currentState);
-
-        std::unique_ptr<TrafficLight> north;
-        std::unique_ptr<TrafficLight> south;
-        std::unique_ptr<TrafficLight> west;
-        std::unique_ptr<TrafficLight> east;
 
         Vehicle_Info approachVehicle;
 
     private: 
         float _latitude;
         float _longitude;
-        int _startCycleThreshold;
-        int _cycleTransitionTime;
+        int _startCycleThreshold{0};
         IntersectionState _currentState;
+
+        std::unique_ptr<TrafficLight> _north;
+        std::unique_ptr<TrafficLight> _south;
+        std::unique_ptr<TrafficLight> _west;
+        std::unique_ptr<TrafficLight> _east;
 
          
 
 };
+
+enum class TrafficState {
+    NOP = 0,
+    CHECK_THRESHOLD = 1,
+    QUEUE_LIGHT = 2,
+    SAFEGUARD = 3,
+    EXIT_SAFEGUARD = 4,
+
+}
 
 
 void Traffic_Task(void* p_arg);

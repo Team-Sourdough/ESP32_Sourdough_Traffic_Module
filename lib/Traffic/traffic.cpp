@@ -13,6 +13,19 @@ void setupTrafficLights(){
       pinMode(WEST_RED, OUTPUT);
       pinMode(WEST_YELLOW, OUTPUT);
       pinMode(WEST_GREEN, OUTPUT);
+
+      // ON(NORTH_RED);
+      // ON(NORTH_YELLOW);
+      // ON(NORTH_GREEN);
+      // ON(SOUTH_RED);
+      // ON(SOUTH_YELLOW);
+      // ON(SOUTH_GREEN);
+      // ON(EAST_RED);
+      // ON(EAST_YELLOW);
+      // ON(EAST_GREEN);
+      // ON(WEST_RED);
+      // ON(WEST_YELLOW);
+      // ON(WEST_GREEN);
 }
 
 //------------------------TRAFFIC LIGHT CLASS DEFINES---------------------------------------------------//
@@ -49,21 +62,21 @@ void TrafficLight::getCurrentState(TrafficLightState *currentState){
 //Constructs an intersection object and creates all the traffic light sub classes
 Intersection::Intersection(IntersectionState startState, float latitude, float longitude) : _currentState(startState), _latitude(latitude), _longitude(longitude){
       setupTrafficLights(); //Sets pins as OUTPUT
-      north = make_unique<TrafficLight>(NORTH_RED, NORTH_YELLOW, NORTH_GREEN); 
-      south = make_unique<TrafficLight>(SOUTH_RED, SOUTH_YELLOW, SOUTH_GREEN);
-      east =  make_unique<TrafficLight>(EAST_RED, EAST_YELLOW, EAST_GREEN);
-      west =  make_unique<TrafficLight>(WEST_RED, WEST_YELLOW, WEST_GREEN);
+      _north = make_unique<TrafficLight>(NORTH_RED, NORTH_YELLOW, NORTH_GREEN); 
+      _south = make_unique<TrafficLight>(SOUTH_RED, SOUTH_YELLOW, SOUTH_GREEN);
+      _east =  make_unique<TrafficLight>(EAST_RED, EAST_YELLOW, EAST_GREEN);
+      _west =  make_unique<TrafficLight>(WEST_RED, WEST_YELLOW, WEST_GREEN);
 
       if(startState == IntersectionState::NORTH_SOUTH){ //North/south starting as green light
-            north->setCurrentState(TrafficLightState::GREEN_LIGHT);
-            south->setCurrentState(TrafficLightState::GREEN_LIGHT);
-            east->setCurrentState(TrafficLightState::RED_LIGHT);
-            west->setCurrentState(TrafficLightState::RED_LIGHT);
+            _north->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            _south->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            _east->setCurrentState(TrafficLightState::RED_LIGHT);
+            _west->setCurrentState(TrafficLightState::RED_LIGHT);
       }else if(startState == IntersectionState::EAST_WEST){ //East/West starting as green light
-            north->setCurrentState(TrafficLightState::RED_LIGHT);
-            south->setCurrentState(TrafficLightState::RED_LIGHT);
-            east->setCurrentState(TrafficLightState::GREEN_LIGHT);
-            west->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            _north->setCurrentState(TrafficLightState::RED_LIGHT);
+            _south->setCurrentState(TrafficLightState::RED_LIGHT);
+            _east->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            _west->setCurrentState(TrafficLightState::GREEN_LIGHT);
       }else{
             Serial.println("Unknown intersection state");
       }
@@ -79,14 +92,8 @@ void Intersection::changeTrafficDirection(){
       SpeedLimitCycleTime cycleTime = getCycleTime();
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
-                  //Set North/South lights to yellow
-                  north->cycleToRed(static_cast<uint32_t>(cycleTime));
-                  south->cycleToRed(static_cast<uint32_t>(cycleTime));
-                  //Create and start timer with callback (callback will set the n/s to red and e/w to green, set intersection new state)
                   break;
             case IntersectionState::EAST_WEST:
-                  east->cycleToRed(static_cast<uint32_t>(cycleTime));
-                  west->cycleToRed(static_cast<uint32_t>(cycleTime));
                   break;
             default:
                   Serial.println("Unknown intersection state");
@@ -102,6 +109,7 @@ void Traffic_Task(void* p_arg){
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
 
       EventBits_t eventFlags;
+      TrafficState trafficState{TrafficState::CHECK_THRESHOLD}; //Check threshold first
       while(1){ //Fatty state machine
             
             eventFlags = xEventGroupWaitBits(rfEventGroup, (updateTrafficData | HomieValid), pdFALSE, pdFALSE, portMAX_DELAY);
@@ -122,9 +130,70 @@ void Traffic_Task(void* p_arg){
                   //Clear updateTrafficData flag
 
             }
-            //Wait on homie valid
+            //Wait on homie valid (verified by Cellular)
             if(HomieValid & eventFlags){
-                  intersection.safeGuard();
+                  switch(trafficState){
+                        case TrafficState::CHECK_THRESHOLD: {
+                              int threshold = intersection.getThreshold();
+                              if(threshold == 0){
+                                    //Set Threshold if it hasn't already been set
+                                    intersection.setThreshold();
+                              }
+                              //Check current distance against threshold
+                              if(intersection.approachVehicle.distance <= threshold){
+                                    //Start light cycle transisiton
+                                    trafficState = TrafficState::QUEUE_LIGHT;
+                              }
+                              break;
+                        }
+                        case TrafficState::QUEUE_LIGHT:{
+                              //QUEUE LIGHT CHANGE - STATE = QUEUE_LIGHT
+                              switch(intersection.approachVehicle.bearing){
+                                    IntersectionState currentState{IntersectionState::UNKNOWN};
+                                    intersection.getCurrentState(&currentState);
+                                    case 'N':
+                                    case 'S':
+                                          if(currentState == IntersectionState::EAST_WEST){
+                                                //Need to change to a N/S configuration
+                                                intersection.changeTrafficDirection();
+                                          }else{
+                                                intersection.holdCurrentDirection();
+                                          }
+                                          break;
+                                    case 'E':
+                                    case 'W':
+                                          if(currentState == IntersectionState::NORTH_SOUTH){
+                                                //Need to change to a E/W configuration
+                                                intersection.changeTrafficDirection();
+                                          }else{
+                                                intersection.holdCurrentDirection();
+                                          }
+                                          break;
+                                    default:
+                                          Serial.println("Unknown vehicle bearing");
+                                          break;
+                              }
+                              break;
+                        }
+                        case TrafficState::SAFEGUARD:{
+                              //STATE = SAFEGUARD 
+                              //PEND TIMER SEMAPHORE
+                              //if north == yellow{
+
+                              //}else{ east or west is yellow
+
+                              //}
+                              break;
+                        }
+                  }
+                              
+
+            }
+                 
+
+                  
+
+
             }
 
             xEventGroupClearBits(vehicleID_Valid, HomieValid);
@@ -133,4 +202,3 @@ void Traffic_Task(void* p_arg){
             
             
       }
-}
