@@ -29,6 +29,28 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 #define ON(light) digitalWrite(light, HIGH);
 #define OFF(light) digitalWrite(light, LOW);
 
+#define SPEED_LIMIT 50
+
+enum class SpeedLimitCycleTime { //Times in ms
+    THIRTY_FIVE_MPH = 3000,
+    FIFTY_FIVE_MPH = 5000,
+    SEVENTY_FIVE_MPH = 7000,
+    UPPER_LIMIT_MPH = 10000
+};
+
+SpeedLimitCycleTime getCycleTime(){
+    if(SPEED_LIMIT >= 0 && SPEED_LIMIT <= 35){
+        return SpeedLimitCycleTime::THIRTY_FIVE_MPH;
+    }else if(SPEED_LIMIT > 35 && SPEED_LIMIT <= 55){
+        return SpeedLimitCycleTime::FIFTY_FIVE_MPH;
+    }else if(SPEED_LIMIT > 55 && SPEED_LIMIT <= 75){
+        return SpeedLimitCycleTime::SEVENTY_FIVE_MPH;
+    }else if(SPEED_LIMIT > 35 && SPEED_LIMIT <= 55){
+        return SpeedLimitCycleTime::UPPER_LIMIT_MPH;
+    }
+}
+
+
 enum class TrafficLightState {
     UNKNOWN = 0,
     RED_LIGHT = 1,
@@ -68,7 +90,8 @@ class Intersection {
 
         void updateTransitionInfo(); //threshold (m/s), cycletime (ms)
         float calculateDistance(float vehicleLat, float vehicleLong);
-        void changeTrafficDirection(int startCycleThreshold, int cycleTime);
+        float calculateBearing(float vehicleLat, float vehicleLong);
+        void changeTrafficDirection();
         void holdCurrentDirection();
 
         void setCurrentState(IntersectionState newState);
@@ -88,7 +111,7 @@ class Intersection {
         int _cycleTransitionTime;
         IntersectionState _currentState;
 
-        float _calculateBearing(float vehicleLat, float vehicleLong); 
+         
 
 };
 

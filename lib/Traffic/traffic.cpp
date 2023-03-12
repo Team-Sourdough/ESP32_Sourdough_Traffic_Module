@@ -75,12 +75,18 @@ float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
 
 }
 
-void Intersection::changeTrafficDirection(int cycleTime){
+void Intersection::changeTrafficDirection(){
+      SpeedLimitCycleTime cycleTime = getCycleTime();
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
-
+                  //Set North/South lights to yellow
+                  north->cycleToRed(static_cast<uint32_t>(cycleTime));
+                  south->cycleToRed(static_cast<uint32_t>(cycleTime));
+                  //Create and start timer with callback (callback will set the n/s to red and e/w to green, set intersection new state)
                   break;
             case IntersectionState::EAST_WEST:
+                  east->cycleToRed(static_cast<uint32_t>(cycleTime));
+                  west->cycleToRed(static_cast<uint32_t>(cycleTime));
                   break;
             default:
                   Serial.println("Unknown intersection state");
@@ -112,6 +118,7 @@ void Traffic_Task(void* p_arg){
                   //Release Mutex
 
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
+                  intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
                   //Clear updateTrafficData flag
 
             }
