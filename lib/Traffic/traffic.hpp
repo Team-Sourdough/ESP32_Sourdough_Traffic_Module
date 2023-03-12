@@ -63,7 +63,6 @@ class TrafficLight {
         TrafficLight(int red, int yellow, int green) : _redLight(red), _yellowLight(yellow), _greenLight(green) {} //initialize member vars
         ~TrafficLight() = default;
 
-        void cycleToRed(uint32_t transitionTime);
         void cycleToGreen(uint32_t transitionTime);
 
         void setCurrentState(TrafficLightState newState);
@@ -94,6 +93,7 @@ class Intersection {
         void changeTrafficDirection();
         void holdCurrentDirection();
 
+        void cycleToRed(uint32_t transitionTime, IntersectionState newState);
         void setCurrentState(IntersectionState newState);
         void getCurrentState(IntersectionState *currentState);
 

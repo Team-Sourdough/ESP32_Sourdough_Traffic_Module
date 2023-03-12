@@ -45,6 +45,36 @@ void TrafficLight::getCurrentState(TrafficLightState *currentState){
       *currentState = _currentState;
 } 
 
+
+void Intersection::cycleToRed(uint32_t transitionTime, IntersectionState newState){
+      switch(newState){
+            case IntersectionState::NORTH_SOUTH:
+                  //Turn the north and south lights yellow
+                  north->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  south->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  break;
+            case IntersectionState::EAST_WEST:
+                  //Turn the east and west lights yellow
+                  east->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  west->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  break;
+            default:
+            Serial.println("IN CYCLE TO RED NOT VALID INTERSECTION STATE");
+            break;
+      }
+      
+      //This function pretty much starts the timer which will post a sem for the task
+      xSemaphoreTake(LightSemaphore, ( TickType_t ) 10);
+      xTimerChangePeriod(LightTimer, transitionTime/portTICK_PERIOD_MS, 50);
+      xTimerStart(LightTimer, 50);
+      return;
+}
+
+void vTimerCallback( TimerHandle_t pxTimer ){
+      Serial.println("Ay my slime I'm in the callback!!!!");
+      xSemaphoreGive(LightSemaphore);
+}
+
 //------------------------INTERSECTION CLASS DEFINES---------------------------------------------------//
 //Constructs an intersection object and creates all the traffic light sub classes
 Intersection::Intersection(IntersectionState startState, float latitude, float longitude) : _currentState(startState), _latitude(latitude), _longitude(longitude){
@@ -80,13 +110,11 @@ void Intersection::changeTrafficDirection(){
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
                   //Set North/South lights to yellow
-                  north->cycleToRed(static_cast<uint32_t>(cycleTime));
-                  south->cycleToRed(static_cast<uint32_t>(cycleTime));
+                  cycleToRed(static_cast<uint32_t>(cycleTime), IntersectionState::NORTH_SOUTH);
                   //Create and start timer with callback (callback will set the n/s to red and e/w to green, set intersection new state)
                   break;
             case IntersectionState::EAST_WEST:
-                  east->cycleToRed(static_cast<uint32_t>(cycleTime));
-                  west->cycleToRed(static_cast<uint32_t>(cycleTime));
+                  cycleToRed(static_cast<uint32_t>(cycleTime), IntersectionState::EAST_WEST);
                   break;
             default:
                   Serial.println("Unknown intersection state");
@@ -103,31 +131,31 @@ void Traffic_Task(void* p_arg){
 
       EventBits_t eventFlags;
       while(1){ //Fatty state machine
-            
-            eventFlags = xEventGroupWaitBits(rfEventGroup, (updateTrafficData | HomieValid), pdFALSE, pdFALSE, portMAX_DELAY);
-            //Update a copy of the vehicle data
-            if(updateTrafficData & eventFlags){
-                  //Take mutex
+            intersection.cycleToRed((uint32_t) SpeedLimitCycleTime::THIRTY_FIVE_MPH, IntersectionState::NORTH_SOUTH);
+            // eventFlags = xEventGroupWaitBits(rfEventGroup, (updateTrafficData | HomieValid), pdFALSE, pdFALSE, portMAX_DELAY);
+            // //Update a copy of the vehicle data
+            // if(updateTrafficData & eventFlags){
+            //       //Take mutex
 
-                  intersection.approachVehicle = {
-                        .latitude = vehicleData.latitude,
-                        .longitude = vehicleData.longitude,
-                        .speed = vehicleData.speed,
-                        .vehicle_id = vehicleData.vehicle_id
-                  };
-                  //Release Mutex
+            //       intersection.approachVehicle = {
+            //             .latitude = vehicleData.latitude,
+            //             .longitude = vehicleData.longitude,
+            //             .speed = vehicleData.speed,
+            //             .vehicle_id = vehicleData.vehicle_id
+            //       };
+            //       //Release Mutex
 
-                  intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
-                  intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
-                  //Clear updateTrafficData flag
+            //       intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
+            //       intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
+            //       //Clear updateTrafficData flag
 
-            }
-            //Wait on homie valid
-            if(HomieValid & eventFlags){
-                  intersection.safeGuard();
-            }
+            // }
+            // //Wait on homie valid
+            // if(HomieValid & eventFlags){
+            //       intersection.safeGuard();
+            // }
 
-            xEventGroupClearBits(vehicleID_Valid, HomieValid);
+            // xEventGroupClearBits(vehicleID_Valid, HomieValid);
             vTaskDelay(x100ms);
       
             
