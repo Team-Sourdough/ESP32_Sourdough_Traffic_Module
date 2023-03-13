@@ -102,6 +102,10 @@ class Intersection {
         IntersectionState getCurrentState(){
             return _currentState;
         }
+        void setOriginalState(IntersectionState newState);
+        IntersectionState getOriginalState(){
+            return _originalState;
+        }
 
         Vehicle_Info approachVehicle;
 
@@ -115,6 +119,7 @@ class Intersection {
         float _longitude;
         int _startCycleThreshold{0};
         IntersectionState _currentState{IntersectionState::UNKNOWN};
+        IntersectionState _originalState{IntersectionState::UNKNOWN};
 
          
 

@@ -89,13 +89,23 @@ void Intersection::changeTrafficDirection(){
       SpeedLimitCycleTime cycleTime = getCycleTime();
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
+            //TODO: Rebase with Tanners code
+
+            _originalState = _currentState; //Save traffic orientation to return to upon exiting safeguard
                   break;
             case IntersectionState::EAST_WEST:
+            //TODO: Rebase with Tanners code
+
+            _originalState = _currentState; //Save traffic orientation to return to upon exiting safeguard
                   break;
             default:
                   Serial.println("Unknown intersection state");
                   break;
       }
+}
+
+void Intersection::holdCurrentDirection(){
+      _originalState = _currentState; //maintain state when safeguard "exits"
 }
 
 
@@ -158,7 +168,9 @@ void Traffic_Task(void* p_arg){
                                                 intersection.holdCurrentDirection();
                                           }else{
                                                 Serial.println("UNKNOWN intersection state");
+                                                break;
                                           }
+                                          trafficState = TrafficState::SAFEGUARD;
                                           break;
                                     case 'E':
                                     case 'W':
@@ -169,7 +181,9 @@ void Traffic_Task(void* p_arg){
                                                 intersection.holdCurrentDirection();
                                           }else{
                                                Serial.println("UNKNOWN intersection state"); 
+                                               break;
                                           }
+                                          trafficState = TrafficState::SAFEGUARD;
                                           break;
                                     default:
                                           Serial.println("Unknown vehicle bearing");
@@ -202,8 +216,13 @@ void Traffic_Task(void* p_arg){
                               }else{
                                     Serial.println("E/W not transitioning");
                               }
-
+                              trafficState = TrafficState::EXIT_SAFEGUARD;
                               break;
+                        }
+                        case TrafficState::EXIT_SAFEGUARD: { //Checks that we have exited the intersection 
+                              //TODO: decide if we need want to transisiton back to "original state" or just leave lights in the current config and start process over?
+
+                              trafficState = TrafficState::CHECK_THRESHOLD; //reset
                         }
                   }
                               
