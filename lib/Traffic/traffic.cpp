@@ -183,6 +183,7 @@ void Traffic_Task(void* p_arg){
                               }
                               break;
                         }
+                        //TODO: may need to change this logic depending on the bearing logic, relative to the car or intersection??
                         case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
                               switch(intersection.approachVehicle.bearing){
                                     IntersectionState currentState = intersection.getCurrentState();
