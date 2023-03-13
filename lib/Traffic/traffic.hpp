@@ -25,6 +25,8 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 #define WEST_YELLOW 47
 #define WEST_GREEN 48
 
+#define DEG_TO_RAD(angle_degrees) ((angle_degrees) * M_PI / 180.0)
+
 //Easy on/off calls for lights
 #define ON(light) digitalWrite(light, HIGH);
 #define OFF(light) digitalWrite(light, LOW);
@@ -92,7 +94,7 @@ class Intersection {
 
         void updateTransitionInfo(); //threshold (m/s), cycletime (ms)
         float calculateDistance(float vehicleLat, float vehicleLong);
-        float calculateBearing(float vehicleLat, float vehicleLong);
+        float calculateBearing(Vehicle_Info* vehicleinfo);
         void changeTrafficDirection();
         void holdCurrentDirection(); //TODO: Implement
 
