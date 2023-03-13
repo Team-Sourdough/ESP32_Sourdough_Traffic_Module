@@ -67,7 +67,9 @@ class TrafficLight {
         void cycleToGreen(uint32_t transitionTime);
 
         void setCurrentState(TrafficLightState newState);
-        void getCurrentState(TrafficLightState *currentState);
+        TrafficLightState getCurrentState(){
+            return _currentState;
+        }
 
     private:
         int _redLight;
@@ -92,25 +94,27 @@ class Intersection {
         float calculateDistance(float vehicleLat, float vehicleLong);
         float calculateBearing(float vehicleLat, float vehicleLong);
         void changeTrafficDirection();
-        void holdCurrentDirection();
+        void holdCurrentDirection(); //TODO: Implement
 
-        void setThreshold();
-        int getThreshold();
+        void setThreshold(); //TODO: Implement
+        int getThreshold(); //TODO: Implement 
         void setCurrentState(IntersectionState newState);
-        void getCurrentState(IntersectionState *currentState);
+        IntersectionState getCurrentState(){
+            return _currentState;
+        }
 
         Vehicle_Info approachVehicle;
+
+        std::unique_ptr<TrafficLight> north;
+        std::unique_ptr<TrafficLight> south;
+        std::unique_ptr<TrafficLight> west;
+        std::unique_ptr<TrafficLight> east;
 
     private: 
         float _latitude;
         float _longitude;
         int _startCycleThreshold{0};
-        IntersectionState _currentState;
-
-        std::unique_ptr<TrafficLight> _north;
-        std::unique_ptr<TrafficLight> _south;
-        std::unique_ptr<TrafficLight> _west;
-        std::unique_ptr<TrafficLight> _east;
+        IntersectionState _currentState{IntersectionState::UNKNOWN};
 
          
 
@@ -123,7 +127,7 @@ enum class TrafficState {
     SAFEGUARD = 3,
     EXIT_SAFEGUARD = 4,
 
-}
+};
 
 
 void Traffic_Task(void* p_arg);

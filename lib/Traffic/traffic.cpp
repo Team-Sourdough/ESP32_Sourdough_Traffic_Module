@@ -54,29 +54,26 @@ void TrafficLight::setCurrentState(TrafficLightState newState){
 
       }
 }
-void TrafficLight::getCurrentState(TrafficLightState *currentState){
-      *currentState = _currentState;
-} 
 
 //------------------------INTERSECTION CLASS DEFINES---------------------------------------------------//
 //Constructs an intersection object and creates all the traffic light sub classes
 Intersection::Intersection(IntersectionState startState, float latitude, float longitude) : _currentState(startState), _latitude(latitude), _longitude(longitude){
       setupTrafficLights(); //Sets pins as OUTPUT
-      _north = make_unique<TrafficLight>(NORTH_RED, NORTH_YELLOW, NORTH_GREEN); 
-      _south = make_unique<TrafficLight>(SOUTH_RED, SOUTH_YELLOW, SOUTH_GREEN);
-      _east =  make_unique<TrafficLight>(EAST_RED, EAST_YELLOW, EAST_GREEN);
-      _west =  make_unique<TrafficLight>(WEST_RED, WEST_YELLOW, WEST_GREEN);
+      north = make_unique<TrafficLight>(NORTH_RED, NORTH_YELLOW, NORTH_GREEN); 
+      south = make_unique<TrafficLight>(SOUTH_RED, SOUTH_YELLOW, SOUTH_GREEN);
+      east =  make_unique<TrafficLight>(EAST_RED, EAST_YELLOW, EAST_GREEN);
+      west =  make_unique<TrafficLight>(WEST_RED, WEST_YELLOW, WEST_GREEN);
 
       if(startState == IntersectionState::NORTH_SOUTH){ //North/south starting as green light
-            _north->setCurrentState(TrafficLightState::GREEN_LIGHT);
-            _south->setCurrentState(TrafficLightState::GREEN_LIGHT);
-            _east->setCurrentState(TrafficLightState::RED_LIGHT);
-            _west->setCurrentState(TrafficLightState::RED_LIGHT);
+            north->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            south->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            east->setCurrentState(TrafficLightState::RED_LIGHT);
+            west->setCurrentState(TrafficLightState::RED_LIGHT);
       }else if(startState == IntersectionState::EAST_WEST){ //East/West starting as green light
-            _north->setCurrentState(TrafficLightState::RED_LIGHT);
-            _south->setCurrentState(TrafficLightState::RED_LIGHT);
-            _east->setCurrentState(TrafficLightState::GREEN_LIGHT);
-            _west->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            north->setCurrentState(TrafficLightState::RED_LIGHT);
+            south->setCurrentState(TrafficLightState::RED_LIGHT);
+            east->setCurrentState(TrafficLightState::GREEN_LIGHT);
+            west->setCurrentState(TrafficLightState::GREEN_LIGHT);
       }else{
             Serial.println("Unknown intersection state");
       }
@@ -116,7 +113,7 @@ void Traffic_Task(void* p_arg){
             //Update a copy of the vehicle data
             if(updateTrafficData & eventFlags){
                   //Take mutex
-
+                  xSemaphoreTake(vehicleDataMutex, portMAX_DELAY);
                   intersection.approachVehicle = {
                         .latitude = vehicleData.latitude,
                         .longitude = vehicleData.longitude,
@@ -124,16 +121,19 @@ void Traffic_Task(void* p_arg){
                         .vehicle_id = vehicleData.vehicle_id
                   };
                   //Release Mutex
+                  xSemaphoreGive(vehicleDataMutex);
 
+                  //Update distance and bearing
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
                   intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
                   //Clear updateTrafficData flag
-
+                  xEventGroupClearBits(rfEventGroup, updateTrafficData); 
             }
+
             //Wait on homie valid (verified by Cellular)
             if(HomieValid & eventFlags){
                   switch(trafficState){
-                        case TrafficState::CHECK_THRESHOLD: {
+                        case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
                               int threshold = intersection.getThreshold();
                               if(threshold == 0){
                                     //Set Threshold if it hasn't already been set
@@ -146,18 +146,18 @@ void Traffic_Task(void* p_arg){
                               }
                               break;
                         }
-                        case TrafficState::QUEUE_LIGHT:{
-                              //QUEUE LIGHT CHANGE - STATE = QUEUE_LIGHT
+                        case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
                               switch(intersection.approachVehicle.bearing){
-                                    IntersectionState currentState{IntersectionState::UNKNOWN};
-                                    intersection.getCurrentState(&currentState);
+                                    IntersectionState currentState = intersection.getCurrentState();
                                     case 'N':
                                     case 'S':
                                           if(currentState == IntersectionState::EAST_WEST){
                                                 //Need to change to a N/S configuration
                                                 intersection.changeTrafficDirection();
-                                          }else{
+                                          }else if(currentState == IntersectionState::NORTH_SOUTH){
                                                 intersection.holdCurrentDirection();
+                                          }else{
+                                                Serial.println("UNKNOWN intersection state");
                                           }
                                           break;
                                     case 'E':
@@ -165,8 +165,10 @@ void Traffic_Task(void* p_arg){
                                           if(currentState == IntersectionState::NORTH_SOUTH){
                                                 //Need to change to a E/W configuration
                                                 intersection.changeTrafficDirection();
-                                          }else{
+                                          }else if(currentState == IntersectionState::EAST_WEST){
                                                 intersection.holdCurrentDirection();
+                                          }else{
+                                               Serial.println("UNKNOWN intersection state"); 
                                           }
                                           break;
                                     default:
@@ -178,11 +180,29 @@ void Traffic_Task(void* p_arg){
                         case TrafficState::SAFEGUARD:{
                               //STATE = SAFEGUARD 
                               //PEND TIMER SEMAPHORE
-                              //if north == yellow{
+                              xSemaphoreTake(timerSemaphore, portMAX_DELAY);
+                              //North/south are changing transitioning
+                              if((intersection.north->getCurrentState() == TrafficLightState::YELLOW_LIGHT) && (intersection.south->getCurrentState() == TrafficLightState::YELLOW_LIGHT)){
+                                    intersection.north->setCurrentState(TrafficLightState::RED_LIGHT);
+                                    intersection.south->setCurrentState(TrafficLightState::RED_LIGHT);
+                                    //Set oncoming to green
+                                    intersection.west->setCurrentState(TrafficLightState::GREEN_LIGHT);
+                                    intersection.east->setCurrentState(TrafficLightState::GREEN_LIGHT);
+                              }else{
+                                    Serial.println("N/S not transitioning");
+                              }
 
-                              //}else{ east or west is yellow
+                              //East/West changing
+                              if((intersection.east->getCurrentState() == TrafficLightState::YELLOW_LIGHT) && (intersection.west->getCurrentState() == TrafficLightState::YELLOW_LIGHT)){
+                                    intersection.east->setCurrentState(TrafficLightState::RED_LIGHT);
+                                    intersection.west->setCurrentState(TrafficLightState::RED_LIGHT);
+                                    //Set oncoming to green
+                                    intersection.north->setCurrentState(TrafficLightState::GREEN_LIGHT);
+                                    intersection.south->setCurrentState(TrafficLightState::GREEN_LIGHT);
+                              }else{
+                                    Serial.println("E/W not transitioning");
+                              }
 
-                              //}
                               break;
                         }
                   }
