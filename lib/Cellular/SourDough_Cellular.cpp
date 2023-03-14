@@ -90,25 +90,29 @@ void Cellular_Send(Notecard *NOTE) {
             rsp = NoteRequestResponse(req);
             rsp_body = JGetObjectItem(rsp, "result");
             json_body = JPrintUnformatted(rsp_body);
+
+            EventBits_t eventFlags = (xEventGroupGetBits(rfEventGroup) & 4);
             
             // Valid Vehicle and valid flag not set
-            if(!strcmp(json_body,"200") & !HomieValid) {
-                xEventGroupSetBits(vehicleID_Valid, HomieValid);
-                usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
-                usbSerial.println(json_body);
-                xEventGroupClearBits(rfEventGroup,updateCellData);
-                return;
+            if(!strcmp(json_body,"200")) {
+                if(!eventFlags){
+                    xEventGroupSetBits(rfEventGroup, HomieValid);
+                    usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
+                    usbSerial.println(json_body);
+                    xEventGroupClearBits(rfEventGroup,updateCellData);
+                    return;
+                }
+                else{
+                    usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
+                    usbSerial.println(json_body);
+                    xEventGroupClearBits(rfEventGroup,updateCellData);
+                    return;
+                }
             }
             // InValid Vehicle
             else if(!strcmp(json_body,"500")) {
                 usbSerial.print("INVALID VEHICLE! Response: ");
                 usbSerial.println(json_body);
-                xEventGroupClearBits(rfEventGroup,updateCellData);
-                return;
-            }
-            // Valid Vehicle and valid flag set
-            else if(!strcmp(json_body,"200") & HomieValid){
-                usbSerial.println("DATA SENT!");
                 xEventGroupClearBits(rfEventGroup,updateCellData);
                 return;
             }
@@ -129,7 +133,12 @@ void Cellular_Task(void* p_arg){
     
     while(1){
 
+        Serial.println("BEFORE WAIT");
+        Serial.println(eventFlags);
+
         eventFlags = xEventGroupWaitBits(rfEventGroup, updateCellData, pdFALSE, pdFALSE, portMAX_DELAY);
+        Serial.println("AFTER WAIT");
+        Serial.println(eventFlags);
 
         if(eventFlags){
             Cellular_Send(&NOTE);
