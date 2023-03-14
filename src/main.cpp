@@ -39,14 +39,14 @@ void setup(){
                    10,           /* priority of the task */
                    &rfTask,      /* Task handle to keep track of created task */
                    0);          /* pin task to core 1 */
-    xTaskCreatePinnedToCore(
-                &Traffic_Task,   /* Task function. */
-                "Traffic Task",     /* name of task. */
-                10240,       /* Stack size of task */
-                NULL,        /* parameter of the task */
-                10,           /* priority of the task */
-                &trafficTask,      /* Task handle to keep track of created task */
-                0);          /* pin task to core 1 */
+    // xTaskCreatePinnedToCore(
+    //             &Traffic_Task,   /* Task function. */
+    //             "Traffic Task",     /* name of task. */
+    //             10240,       /* Stack size of task */
+    //             NULL,        /* parameter of the task */
+    //             10,           /* priority of the task */
+    //             &trafficTask,      /* Task handle to keep track of created task */
+    //             0);          /* pin task to core 1 */
 
 //We should clear all of our flags, for some reason I see that some of them are high before they should be
 xEventGroupClearBits(rfEventGroup, (updateCellData | updateTrafficData));
