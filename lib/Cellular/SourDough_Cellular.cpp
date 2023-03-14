@@ -90,9 +90,12 @@ void Cellular_Send(Notecard *NOTE) {
             rsp = NoteRequestResponse(req);
             rsp_body = JGetObjectItem(rsp, "result");
             json_body = JPrintUnformatted(rsp_body);
+
+            EventBits_t eventFlags = xEventGroupWaitBits(vehicleID_Valid, HomieValid, pdFALSE, pdFALSE, portMAX_DELAY);
+
             
             // Valid Vehicle and valid flag not set
-            if(!strcmp(json_body,"200") & !HomieValid) {
+            if(!strcmp(json_body,"200") & !eventFlags) {
                 xEventGroupSetBits(vehicleID_Valid, HomieValid);
                 usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
                 usbSerial.println(json_body);
@@ -107,7 +110,7 @@ void Cellular_Send(Notecard *NOTE) {
                 return;
             }
             // Valid Vehicle and valid flag set
-            else if(!strcmp(json_body,"200") & HomieValid){
+            else if(!strcmp(json_body,"200") & eventFlags){
                 usbSerial.println("DATA SENT!");
                 xEventGroupClearBits(rfEventGroup,updateCellData);
                 return;
