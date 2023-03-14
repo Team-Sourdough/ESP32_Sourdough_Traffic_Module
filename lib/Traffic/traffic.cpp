@@ -240,7 +240,7 @@ void Traffic_Task(void* p_arg){
             }
 
             //Wait on homie valid (verified by Cellular)
-            //TODO: Clarify/refactor HomieValid flag (ie. when to clear and how long to set)
+            //TODO: NEED A WAY TO VERIFY IF VEHICLE IS APPROACHING OR EXITING
             if(HomieValid & eventFlags){
                   switch(trafficState){
                         case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
@@ -326,8 +326,7 @@ void Traffic_Task(void* p_arg){
                               break;
                         }
                         case TrafficState::EXIT_SAFEGUARD: { //Checks that we have exited the intersection 
-                              //TODO: decide if we need want to transisiton back to "original state" or just leave lights in the current config and start process over?
-
+                              //TODO: Need to calculate if a vehicle is exiting before clearing the flag
                               trafficState = TrafficState::CHECK_THRESHOLD; //reset
                               xEventGroupClearBits(rfEventGroup, updateTrafficData);
                         }
