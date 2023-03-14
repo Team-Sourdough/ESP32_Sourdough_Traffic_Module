@@ -59,3 +59,19 @@ EventGroupHandle_t EventGroupCreate(){
             return xCreatedEventGroup;
       }
 }
+
+TimerHandle_t CreateTimer(void){
+      TimerHandle_t xtimer;
+      xtimer = xTimerCreate("Light Timer",       // Just a text name, not used by the kernel.
+                              100,   // The timer period in ticks.
+                              pdFALSE,        // The timers will auto-reload themselves when they expire.
+                              ( void * ) 2,  // Assign each timer a unique id equal to its array index.
+                              vTimerCallback // Each timer calls the same callback when it expires.
+                              );
+
+      if(xtimer == NULL){
+            Serial.println("Something went wrong with the Timer Creation");
+      }
+
+      return xtimer;
+}
