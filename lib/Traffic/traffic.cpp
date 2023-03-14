@@ -147,6 +147,12 @@ float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
 // }
 }
 
+void Intersection::setThreshold(float vehicleSpeed){
+      SpeedLimitCycleTime cycleTime = getCycleTime(); //ms
+      float minDistanceThreshold = MPH_TO_FPMS(approachVehicle.speed) * static_cast<float>(cycleTime); //mph -> ft/ms * ms = ft
+      _startCycleThreshold = minDistanceThreshold + (minDistanceThreshold * SAFETY_FACTOR);      
+}
+
 void Intersection::changeTrafficDirection(){
       SpeedLimitCycleTime cycleTime = getCycleTime();
       switch(_currentState){
@@ -266,6 +272,8 @@ void Traffic_Task(void* p_arg){
                                     //Set oncoming to green
                                     intersection.west->setCurrentState(TrafficLightState::GREEN_LIGHT);
                                     intersection.east->setCurrentState(TrafficLightState::GREEN_LIGHT);
+
+                                    intersection.setCurrentState(IntersectionState::EAST_WEST);
                               }else{
                                     Serial.println("N/S not transitioning");
                               }
@@ -277,6 +285,8 @@ void Traffic_Task(void* p_arg){
                                     //Set oncoming to green
                                     intersection.north->setCurrentState(TrafficLightState::GREEN_LIGHT);
                                     intersection.south->setCurrentState(TrafficLightState::GREEN_LIGHT);
+
+                                    intersection.setCurrentState(IntersectionState::NORTH_SOUTH);
                               }else{
                                     Serial.println("E/W not transitioning");
                               }

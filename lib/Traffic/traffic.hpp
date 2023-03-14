@@ -26,12 +26,14 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 #define WEST_GREEN 48
 
 #define DEG_TO_RAD(angle_degrees) ((angle_degrees) * M_PI / 180.0)
+#define MPH_TO_FPMS(mph) (mph * 0.00146667)
 
 //Easy on/off calls for lights
 #define ON(light) digitalWrite(light, HIGH);
 #define OFF(light) digitalWrite(light, LOW);
 
 #define SPEED_LIMIT 50
+#define SAFETY_FACTOR 2 //200% of min threshold will be added 
 
 enum class SpeedLimitCycleTime { //Times in ms
     THIRTY_FIVE_MPH = 3000,
@@ -98,13 +100,21 @@ class Intersection {
         void changeTrafficDirection();
         void holdCurrentDirection(); //TODO: Implement
 
-        void setThreshold(); //TODO: Implement
-        int getThreshold(); //TODO: Implement 
-        void setCurrentState(IntersectionState newState);
+        void setThreshold(float vehicleSpeed); 
+        int getThreshold(){
+            return _startCycleThreshold;
+        }
+
+        void setCurrentState(IntersectionState newState){
+            _currentState = newState;
+        }
         IntersectionState getCurrentState(){
             return _currentState;
         }
-        void setOriginalState(IntersectionState newState);
+
+        void setOriginalState(IntersectionState newState){
+            _originalState = newState;
+        }
         IntersectionState getOriginalState(){
             return _originalState;
         }
