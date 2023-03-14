@@ -25,7 +25,7 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 #define WEST_YELLOW 47
 #define WEST_GREEN 48
 
-#define DEG_TO_RAD(angle_degrees) ((angle_degrees) * M_PI / 180.0)
+#define DEG_TO_RADS(angle_degrees) ((angle_degrees) * M_PI / 180.0)
 #define MPH_TO_FPMS(mph) (mph * 0.00146667)
 
 //Easy on/off calls for lights
