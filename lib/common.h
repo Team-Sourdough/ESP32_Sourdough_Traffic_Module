@@ -30,9 +30,7 @@ enum vehicleIDEnum {
 
 struct Vehicle_Info{
     float latitude;
-    float prevLat;
     float longitude;
-    float prevLong;
     float distance;
     char bearing;
     float speed;

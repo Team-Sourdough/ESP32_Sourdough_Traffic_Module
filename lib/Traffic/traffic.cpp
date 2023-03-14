@@ -79,17 +79,25 @@ Intersection::Intersection(IntersectionState startState, float latitude, float l
       }
 }
 
+const double kEarthRadiusFeet = 20902231.96; // Earth's radius in feet
+//Returns distance between intersection and approaching vehicle in feet
 float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
       //NOTE: intersection lat and long can be accessed through _latitude and _longitude 
       //Paste distance calculations 
+      double delta_lat = DEG_TO_RAD(_latitude) - DEG_TO_RAD(vehicleLat);
+      double delta_lon = DEG_TO_RAD(_longitude) - DEG_TO_RAD(vehicleLong);
 
+      double a = pow(sin(delta_lat / 2), 2) + cos(DEG_TO_RAD(vehicleLat)) * cos(DEG_TO_RAD(_latitude)) * pow(sin(delta_lon / 2), 2);
+      double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return kEarthRadiusFeet * c;
 }
 
 //TODO: finish converting to our needs
-float Intersection::calculateBearing(Vehicle_Info* vehicleInfo){
-      float deltaLong = DEG_TO_RAD(vehicleInfo->longitude) - DEG_TO_RAD(vehicleInfo->prevLong);
-      float X = cos(pos2[0]) * (sin(deltaLong));
-      float Y = cos(pos1[0]) * sin(pos2[0]) - sin(pos1[0]) * cos(pos2[0]) * cos(deltaLong);
+float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
+      float deltaLong = DEG_TO_RAD(vehicleLong) - DEG_TO_RAD(_longitude);
+      float X = cos(DEG_TO_RAD(vehicleLat)) * (sin(deltaLong));
+      float Y = cos(DEG_TO_RAD(_latitude)) * sin(DEG_TO_RAD(vehicleLat) - DEG_TO_RAD(_latitude)) * cos(DEG_TO_RAD(vehicleLat)) * cos(deltaLong);
       float bearing = atan2(X,Y);
       if (bearing < 0){
             bearing = (2 * M_PI) + bearing;
@@ -100,7 +108,7 @@ float Intersection::calculateBearing(Vehicle_Info* vehicleInfo){
       else if ( bearing >= 0.78 || bearing < 2.35) {
             return 'E';
       }
-      else if (2.35 <= bearing < 3.92){
+      else if (2.35 <= bearing && bearing < 3.92){
             return 'S';
       }
       else{
@@ -145,15 +153,11 @@ void Traffic_Task(void* p_arg){
             eventFlags = xEventGroupWaitBits(rfEventGroup, (updateTrafficData | HomieValid), pdFALSE, pdFALSE, portMAX_DELAY);
             //Update a copy of the vehicle data
             if(updateTrafficData & eventFlags){
-                  float prevLat = intersection.approachVehicle.latitude;
-                  float prevLong = intersection.approachVehicle.longitude;
                   //Take mutex
                   xSemaphoreTake(vehicleDataMutex, portMAX_DELAY);
                   intersection.approachVehicle = {
                         .latitude = vehicleData.latitude,
-                        .prevLat = prevLat,
                         .longitude = vehicleData.longitude,
-                        .prevLong = vehicleData.longitude,
                         .speed = vehicleData.speed,
                         .vehicle_id = vehicleData.vehicle_id
                   };
@@ -162,7 +166,7 @@ void Traffic_Task(void* p_arg){
 
                   //Update distance and bearing
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
-                  intersection.approachVehicle.bearing = intersection.calculateBearing();
+                  intersection.approachVehicle.bearing = intersection.calculateBearing(DEG_TO_RAD(intersection.approachVehicle.latitude), DEG_TO_RAD(intersection.approachVehicle.longitude));
                   //Clear updateTrafficData flag
                   xEventGroupClearBits(rfEventGroup, updateTrafficData); 
             }

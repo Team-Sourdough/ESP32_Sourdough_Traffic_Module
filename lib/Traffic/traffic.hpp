@@ -94,7 +94,7 @@ class Intersection {
 
         void updateTransitionInfo(); //threshold (m/s), cycletime (ms)
         float calculateDistance(float vehicleLat, float vehicleLong);
-        float calculateBearing(Vehicle_Info* vehicleinfo);
+        float calculateBearing(float vehicleLat, float vehicleLong);
         void changeTrafficDirection();
         void holdCurrentDirection(); //TODO: Implement
 
