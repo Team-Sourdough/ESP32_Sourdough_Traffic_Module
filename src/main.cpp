@@ -4,7 +4,7 @@
 
 #include "reciever.cpp"
 #include "SourDough_Cellular.cpp"
-// #include "traffic.cpp"
+#include "traffic.cpp"
 #include "../lib/common.h"
 
 #include "../lib/common.c"
