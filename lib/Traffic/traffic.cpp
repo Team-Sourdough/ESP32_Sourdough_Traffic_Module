@@ -95,10 +95,10 @@ float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
 
 //TODO: finish converting to our needs
 float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
-      float deltaLong = DEG_TO_RAD(vehicleLong) - DEG_TO_RAD(_longitude);
-      float X = cos(DEG_TO_RAD(vehicleLat)) * (sin(deltaLong));
-      float Y = cos(DEG_TO_RAD(_latitude)) * sin(DEG_TO_RAD(vehicleLat) - DEG_TO_RAD(_latitude)) * cos(DEG_TO_RAD(vehicleLat)) * cos(deltaLong);
-      float bearing = atan2(X,Y);
+      double deltaLong = DEG_TO_RAD(vehicleLong) - DEG_TO_RAD(_longitude);
+      double X = cos(DEG_TO_RAD(vehicleLat)) * (sin(deltaLong));
+      double Y = cos(DEG_TO_RAD(_latitude)) * sin(DEG_TO_RAD(vehicleLat) - DEG_TO_RAD(_latitude)) * cos(DEG_TO_RAD(vehicleLat)) * cos(deltaLong);
+      double bearing = atan2(X,Y);
       if (bearing < 0){
             bearing = (2 * M_PI) + bearing;
       }
@@ -114,6 +114,37 @@ float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
       else{
             return 'W';
       }
+
+      //Chapt gpt bearing ranges in degrees
+//           if (bearing < 0) {
+//         bearing += 360.0;
+//     }
+
+//     if ((bearing >= 0 && bearing <= 22.5) || (bearing > 337.5 && bearing <= 360)) {
+//         return "north";
+//     }
+//     else if (bearing > 22.5 && bearing <= 67.5) {
+//         return "northeast";
+//     }
+//     else if (bearing > 67.5 && bearing <= 112.5) {
+//         return "east";
+//     }
+//     else if (bearing > 112.5 && bearing <= 157.5) {
+//         return "southeast";
+//     }
+//     else if (bearing > 157.5 && bearing <= 202.5) {
+//         return "south";
+//     }
+//     else if (bearing > 202.5 && bearing <= 247.5) {
+//         return "southwest";
+//     }
+//     else if (bearing > 247.5 && bearing <= 292.5) {
+//         return "west";
+//     }
+//     else if (bearing > 292.5 && bearing <= 337.5) {
+//         return "northwest";
+//     }
+// }
 }
 
 void Intersection::changeTrafficDirection(){
