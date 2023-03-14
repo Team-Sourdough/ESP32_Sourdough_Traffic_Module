@@ -91,12 +91,12 @@ void Cellular_Send(Notecard *NOTE) {
             rsp_body = JGetObjectItem(rsp, "result");
             json_body = JPrintUnformatted(rsp_body);
 
-            EventBits_t eventFlags = (xEventGroupGetBits(vehicleID_Valid) & 1);
+            EventBits_t eventFlags = (xEventGroupGetBits(rfEventGroup) & 4);
             
             // Valid Vehicle and valid flag not set
             if(!strcmp(json_body,"200")) {
                 if(!eventFlags){
-                    xEventGroupSetBits(vehicleID_Valid, HomieValid);
+                    xEventGroupSetBits(rfEventGroup, HomieValid);
                     usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
                     usbSerial.println(json_body);
                     xEventGroupClearBits(rfEventGroup,updateCellData);
