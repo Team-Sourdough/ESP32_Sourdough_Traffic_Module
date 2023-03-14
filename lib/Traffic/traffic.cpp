@@ -84,10 +84,10 @@ const double kEarthRadiusFeet = 20902231.96; // Earth's radius in feet
 float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
       //NOTE: intersection lat and long can be accessed through _latitude and _longitude 
       //Paste distance calculations 
-      double delta_lat = DEG_TO_RAD(_latitude) - DEG_TO_RAD(vehicleLat);
-      double delta_lon = DEG_TO_RAD(_longitude) - DEG_TO_RAD(vehicleLong);
+      double delta_lat = DEG_TO_RADS(_latitude) - DEG_TO_RADS(vehicleLat);
+      double delta_lon = DEG_TO_RADS(_longitude) - DEG_TO_RADS(vehicleLong);
 
-      double a = pow(sin(delta_lat / 2), 2) + cos(DEG_TO_RAD(vehicleLat)) * cos(DEG_TO_RAD(_latitude)) * pow(sin(delta_lon / 2), 2);
+      double a = pow(sin(delta_lat / 2), 2) + cos(DEG_TO_RADS(vehicleLat)) * cos(DEG_TO_RADS(_latitude)) * pow(sin(delta_lon / 2), 2);
       double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
     return kEarthRadiusFeet * c;
@@ -95,9 +95,9 @@ float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
 
 //TODO: finish converting to our needs
 float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
-      double deltaLong = DEG_TO_RAD(vehicleLong) - DEG_TO_RAD(_longitude);
-      double X = cos(DEG_TO_RAD(vehicleLat)) * (sin(deltaLong));
-      double Y = cos(DEG_TO_RAD(_latitude)) * sin(DEG_TO_RAD(vehicleLat) - DEG_TO_RAD(_latitude)) * cos(DEG_TO_RAD(vehicleLat)) * cos(deltaLong);
+      double deltaLong = DEG_TO_RADS(vehicleLong) - DEG_TO_RADS(_longitude);
+      double X = cos(DEG_TO_RADS(vehicleLat)) * (sin(deltaLong));
+      double Y = cos(DEG_TO_RADS(_latitude)) * sin(DEG_TO_RADS(vehicleLat) - DEG_TO_RADS(_latitude)) * cos(DEG_TO_RADS(vehicleLat)) * cos(deltaLong);
       double bearing = atan2(X,Y);
       if (bearing < 0){
             bearing = (2 * M_PI) + bearing;
@@ -234,7 +234,7 @@ void Traffic_Task(void* p_arg){
 
                   //Update distance and bearing
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
-                  intersection.approachVehicle.bearing = intersection.calculateBearing(DEG_TO_RAD(intersection.approachVehicle.latitude), DEG_TO_RAD(intersection.approachVehicle.longitude));
+                  intersection.approachVehicle.bearing = intersection.calculateBearing(DEG_TO_RADS(intersection.approachVehicle.latitude), DEG_TO_RADS(intersection.approachVehicle.longitude));
                   //Clear updateTrafficData flag
                   xEventGroupClearBits(rfEventGroup, updateTrafficData); 
             }
