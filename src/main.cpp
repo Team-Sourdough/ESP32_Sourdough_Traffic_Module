@@ -8,6 +8,7 @@
 #include "../lib/common.h"
 
 #include "../lib/common.c"
+#include "timers.h"
 
 
 void setup(){
@@ -49,8 +50,10 @@ void setup(){
                 1);          /* pin task to core 1 */
 
 
-   LightTimer =  xTimerCreate("LightTimer", 100, pdFALSE, (void *)1, vTimerCallback);
-   LightSemaphore = xSemaphoreCreateBinary();
+   //xTimerStart( LightTimer, 0 );
+    // if(xTimerStart( LightTimer, 0 ) == pdPASS ){       
+    //          Serial.println("Hmmmmmmm");                  
+    //   }
 
 //We should clear all of our flags, for some reason I see that some of them are high before they should be
 xEventGroupClearBits(rfEventGroup, (updateCellData | updateTrafficData));

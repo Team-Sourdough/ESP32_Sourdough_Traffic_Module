@@ -65,8 +65,9 @@ void Intersection::cycleToRed(uint32_t transitionTime, IntersectionState newStat
       
       //This function pretty much starts the timer which will post a sem for the task
       xSemaphoreTake(LightSemaphore, ( TickType_t ) 10);
-      xTimerChangePeriod(LightTimer, transitionTime/portTICK_PERIOD_MS, 50);
-      xTimerStart(LightTimer, 50);
+      Serial.println(transitionTime/portTICK_PERIOD_MS);
+      xTimerChangePeriod(LightTimer, transitionTime/portTICK_PERIOD_MS, 0);
+      xTimerStart( LightTimer, 0 );
       return;
 }
 
@@ -129,6 +130,9 @@ void Traffic_Task(void* p_arg){
       constexpr float intersectionLongitude = -105.236410;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
 
+      LightTimer =  CreateTimer();
+      LightSemaphore = xSemaphoreCreateBinary();
+
       EventBits_t eventFlags;
       while(1){ //Fatty state machine
             intersection.cycleToRed((uint32_t) SpeedLimitCycleTime::THIRTY_FIVE_MPH, IntersectionState::NORTH_SOUTH);
@@ -156,7 +160,7 @@ void Traffic_Task(void* p_arg){
             // }
 
             // xEventGroupClearBits(vehicleID_Valid, HomieValid);
-            vTaskDelay(x100ms);
+            delay(5000);
       
             
             
