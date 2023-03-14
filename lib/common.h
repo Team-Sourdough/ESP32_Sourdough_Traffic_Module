@@ -43,6 +43,9 @@ EventGroupHandle_t EventGroupCreate();
 Vehicle_Info vehicleData;
 
 static SemaphoreHandle_t vehicleDataMutex; 
+TimerHandle_t LightTimer;
+SemaphoreHandle_t LightSemaphore;
+TimerHandle_t CreateTimer(void)
 
 
 #endif

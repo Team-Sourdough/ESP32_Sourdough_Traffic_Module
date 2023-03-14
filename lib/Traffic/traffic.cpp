@@ -147,23 +147,45 @@ float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
 // }
 }
 
-void Intersection::setThreshold(float vehicleSpeed){
+void Intersection::setThreshold(){
       SpeedLimitCycleTime cycleTime = getCycleTime(); //ms
       float minDistanceThreshold = MPH_TO_FPMS(approachVehicle.speed) * static_cast<float>(cycleTime); //mph -> ft/ms * ms = ft
       _startCycleThreshold = minDistanceThreshold + (minDistanceThreshold * SAFETY_FACTOR);      
+}
+
+void Intersection::cycleToRed(uint32_t transitionTime, IntersectionState newState){
+      switch(newState){
+            case IntersectionState::NORTH_SOUTH:
+                  //Turn the north and south lights yellow
+                  north->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  south->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  break;
+            case IntersectionState::EAST_WEST:
+                  //Turn the east and west lights yellow
+                  east->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  west->setCurrentState(TrafficLightState::YELLOW_LIGHT);
+                  break;
+            default:
+            Serial.println("IN CYCLE TO RED NOT VALID INTERSECTION STATE");
+            break;
+      }
+      
+      //This function pretty much starts the timer which will post a sem for the task
+      xSemaphoreTake(LightSemaphore, ( TickType_t ) 10);
+      xTimerChangePeriod(LightTimer, transitionTime/portTICK_PERIOD_MS, 0);
+      xTimerStart( LightTimer, 0 );
+      return;
 }
 
 void Intersection::changeTrafficDirection(){
       SpeedLimitCycleTime cycleTime = getCycleTime();
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
-            //TODO: Rebase with Tanners code
-
+            cycleToRed(static_cast<uint32_t>(cycleTime), IntersectionState::NORTH_SOUTH);
             _originalState = _currentState; //Save traffic orientation to return to upon exiting safeguard
                   break;
             case IntersectionState::EAST_WEST:
-            //TODO: Rebase with Tanners code
-
+            cycleToRed(static_cast<uint32_t>(cycleTime), IntersectionState::EAST_WEST);
             _originalState = _currentState; //Save traffic orientation to return to upon exiting safeguard
                   break;
             default:
@@ -176,12 +198,21 @@ void Intersection::holdCurrentDirection(){
       _originalState = _currentState; //maintain state when safeguard "exits"
 }
 
+void vTimerCallback( TimerHandle_t pxTimer ){
+      Serial.println("Ay my slime I'm in the callback!!!!");
+      xSemaphoreGive(LightSemaphore);
+}
 
 
 void Traffic_Task(void* p_arg){
+      //Create Intersection
       constexpr float intersectionLatitude = 40.000113;
       constexpr float intersectionLongitude = -105.236410;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
+
+      //Create Timer
+      LightTimer =  CreateTimer();
+      LightSemaphore = xSemaphoreCreateBinary();
 
       EventBits_t eventFlags;
       TrafficState trafficState{TrafficState::CHECK_THRESHOLD}; //Check threshold first
@@ -264,7 +295,7 @@ void Traffic_Task(void* p_arg){
                         case TrafficState::SAFEGUARD:{
                               //STATE = SAFEGUARD 
                               //PEND TIMER SEMAPHORE
-                              xSemaphoreTake(timerSemaphore, portMAX_DELAY);
+                              xSemaphoreTake(LightSemaphore, portMAX_DELAY);
                               //North/south are changing transitioning
                               if((intersection.north->getCurrentState() == TrafficLightState::YELLOW_LIGHT) && (intersection.south->getCurrentState() == TrafficLightState::YELLOW_LIGHT)){
                                     intersection.north->setCurrentState(TrafficLightState::RED_LIGHT);
@@ -290,7 +321,7 @@ void Traffic_Task(void* p_arg){
                               }else{
                                     Serial.println("E/W not transitioning");
                               }
-                              xSemaphoreGive(timerSemaphore);
+                              xSemaphoreGive(LightSemaphore);
                               trafficState = TrafficState::EXIT_SAFEGUARD;
                               break;
                         }
@@ -298,6 +329,7 @@ void Traffic_Task(void* p_arg){
                               //TODO: decide if we need want to transisiton back to "original state" or just leave lights in the current config and start process over?
 
                               trafficState = TrafficState::CHECK_THRESHOLD; //reset
+                              xEventGroupClearBits(rfEventGroup, updateTrafficData);
                         }
                   }
                               

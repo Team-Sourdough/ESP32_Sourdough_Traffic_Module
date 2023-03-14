@@ -67,9 +67,6 @@ class TrafficLight {
         TrafficLight(int red, int yellow, int green) : _redLight(red), _yellowLight(yellow), _greenLight(green) {} //initialize member vars
         ~TrafficLight() = default;
 
-        void cycleToRed(uint32_t transitionTime);
-        void cycleToGreen(uint32_t transitionTime);
-
         void setCurrentState(TrafficLightState newState);
         TrafficLightState getCurrentState(){
             return _currentState;
@@ -94,13 +91,14 @@ class Intersection {
         Intersection(IntersectionState startState, float latitude, float longitude);
         ~Intersection() = default;
 
+        void cycleToRed(uint32_t transitionTime, IntersectionState newState);
         void updateTransitionInfo(); //threshold (m/s), cycletime (ms)
         float calculateDistance(float vehicleLat, float vehicleLong);
         float calculateBearing(float vehicleLat, float vehicleLong);
         void changeTrafficDirection();
         void holdCurrentDirection(); //TODO: Implement
 
-        void setThreshold(float vehicleSpeed); 
+        void setThreshold(); 
         int getThreshold(){
             return _startCycleThreshold;
         }
