@@ -6,6 +6,7 @@
 #include <message_buffer.h>
 #include <event_groups.h>
 #include <semphr.h>
+#include <timers.h>
 
 //This buffer will be used to send the RF recieved data to the Cellular task to actually send that bitch
 MessageBufferHandle_t xMessageBuffer;
@@ -45,7 +46,7 @@ Vehicle_Info vehicleData;
 static SemaphoreHandle_t vehicleDataMutex; 
 TimerHandle_t LightTimer;
 SemaphoreHandle_t LightSemaphore;
-TimerHandle_t CreateTimer(void)
+TimerHandle_t CreateTimer(void);
 
 
 #endif
