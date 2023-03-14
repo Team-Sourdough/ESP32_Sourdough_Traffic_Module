@@ -203,6 +203,7 @@ void Traffic_Task(void* p_arg){
             }
 
             //Wait on homie valid (verified by Cellular)
+            //TODO: Clarify/refactor HomieValid flag (ie. when to clear and how long to set)
             if(HomieValid & eventFlags){
                   switch(trafficState){
                         case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
@@ -220,8 +221,8 @@ void Traffic_Task(void* p_arg){
                         }
                         //TODO: may need to change this logic depending on the bearing logic, relative to the car or intersection??
                         case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
+                              IntersectionState currentState = intersection.getCurrentState();
                               switch(intersection.approachVehicle.bearing){
-                                    IntersectionState currentState = intersection.getCurrentState();
                                     case 'N':
                                     case 'S':
                                           if(currentState == IntersectionState::EAST_WEST){
@@ -279,6 +280,7 @@ void Traffic_Task(void* p_arg){
                               }else{
                                     Serial.println("E/W not transitioning");
                               }
+                              xSemaphoreGive(timerSemaphore);
                               trafficState = TrafficState::EXIT_SAFEGUARD;
                               break;
                         }
