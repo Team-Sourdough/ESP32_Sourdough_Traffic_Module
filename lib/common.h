@@ -2,6 +2,7 @@
 #define COMMON_HG
 
 #include <FreeRTOS.h>
+#include <Arduino.h>
 #include <message_buffer.h>
 #include <event_groups.h>
 #include <semphr.h>
@@ -17,18 +18,21 @@ const TickType_t x100ms = pdMS_TO_TICKS( 100 );
 
 EventGroupHandle_t rfEventGroup;
 enum rfEventFlagsEnum {
-    updateCellData = 0b0 << 0,
-    updateTrafficData = 0b1 << 1
+    updateCellData = 0b1 << 0,
+    updateTrafficData = 0b1 << 1,
+    HomieValid = 0b1 << 2
 };
 
 EventGroupHandle_t vehicleID_Valid;
 enum vehicleIDEnum {
-    HomieValid = 0b1 << 0,
+    
 };
 
 struct Vehicle_Info{
     float latitude;
     float longitude;
+    float distance;
+    char bearing;
     float speed;
     uint16_t vehicle_id;
 };
@@ -36,9 +40,12 @@ struct Vehicle_Info{
 //We want all the tasks to be able to access this because this is shared data among the 3 tasks
 
 EventGroupHandle_t EventGroupCreate();
-Vehicle_Info recievebuffer;
+Vehicle_Info vehicleData;
 
-static SemaphoreHandle_t recieveMutex; 
+static SemaphoreHandle_t vehicleDataMutex; 
+TimerHandle_t LightTimer;
+SemaphoreHandle_t LightSemaphore;
+TimerHandle_t CreateTimer(void)
 
 
 #endif

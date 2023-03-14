@@ -53,7 +53,7 @@ void RecieverTest(RH_RF95 *rf95){
 //It goes Lat, Long, Speed, vehicle ID
 void ParseBuffer(uint8_t buffer[], Vehicle_Info* result) {
   uint8_t offset = 0;
-  xSemaphoreTake(recieveMutex, portMAX_DELAY);
+  xSemaphoreTake(vehicleDataMutex, portMAX_DELAY);
   memcpy((&result->latitude), buffer + offset, sizeof(result->latitude));
   offset += sizeof(result->latitude);
   memcpy((&result->longitude), buffer + offset, sizeof(result->longitude));
@@ -62,7 +62,7 @@ void ParseBuffer(uint8_t buffer[], Vehicle_Info* result) {
   offset += sizeof(result->speed);
   memcpy((&result->vehicle_id), buffer + offset, sizeof(result->vehicle_id));
   offset += sizeof(result->vehicle_id);
-  xSemaphoreGive(recieveMutex);
+  xSemaphoreGive(vehicleDataMutex);
   //Set the cell data and traffic data bits. Alerts the traffic module
   xEventGroupSetBits(rfEventGroup, (rfEventFlagsEnum::updateCellData | rfEventFlagsEnum::updateTrafficData));
   return;
@@ -100,8 +100,8 @@ void RF_Task(void* p_arg){
             //Serial.println("RF Task!");
 
             if(rf95.recv(data, &len)){
-            ParseBuffer(data, &recievebuffer);
-            PrintBuff(&recievebuffer);
+              ParseBuffer(data, &vehicleData);
+              PrintBuff(&vehicleData);
             }
             // delay(100);
             vTaskDelay(x100ms);
