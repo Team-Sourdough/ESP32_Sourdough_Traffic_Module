@@ -328,7 +328,7 @@ void Traffic_Task(void* p_arg){
                         case TrafficState::EXIT_SAFEGUARD: { //Checks that we have exited the intersection 
                               //TODO: Need to calculate if a vehicle is exiting before clearing the flag
                               trafficState = TrafficState::CHECK_THRESHOLD; //reset
-                              xEventGroupClearBits(rfEventGroup, updateTrafficData);
+                              xEventGroupClearBits(vehicleID_Valid, HomieValid);
                         }
                   }
                               
@@ -341,7 +341,6 @@ void Traffic_Task(void* p_arg){
 
             }
 
-            xEventGroupClearBits(vehicleID_Valid, HomieValid);
             vTaskDelay(x100ms);
       
             
