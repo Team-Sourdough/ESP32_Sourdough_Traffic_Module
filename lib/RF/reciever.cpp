@@ -21,19 +21,8 @@ void SerialMonitorSetup(){
 }
 
 
-
-#define EAST_RED 39
-#define EAST_YELLOW 40
-#define EAST_GREEN 41
-
 void RecieverTest(RH_RF95 *rf95){
   Serial.println("Feather LoRa RX Test!");
-
-      pinMode(EAST_RED, OUTPUT);
-      pinMode(EAST_GREEN, OUTPUT);
-      digitalWrite(EAST_RED,LOW);
-      digitalWrite(EAST_GREEN,LOW);
-
   // manual reset
   digitalWrite(RFM95_RST, LOW);
   delay(10);
@@ -42,18 +31,15 @@ void RecieverTest(RH_RF95 *rf95){
   
   while (!rf95->init()) {
     Serial.println("LoRa radio init failed");
-    digitalWrite(EAST_RED,HIGH);
     Serial.println("Uncomment '#define SERIAL_DEBUG' in RH_RF95.cpp for detailed debug info");
     while (1);
   }
   Serial.println("LoRa radio init OK!");
 
   if (!rf95->setFrequency(RF95_FREQ)) {
-    digitalWrite(EAST_RED,HIGH);
     Serial.println("setFrequency failed");
     while (1);
   }
-  digitalWrite(EAST_GREEN,HIGH);
   Serial.print("Set Freq to: "); 
   Serial.println(RF95_FREQ);
   
