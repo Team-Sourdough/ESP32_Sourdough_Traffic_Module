@@ -83,7 +83,7 @@ void Cellular_Send(Notecard *NOTE) {
                 JAddNumberToObject(body, "Latitude", localGPSdata.latitude);
                 JAddNumberToObject(body, "Longitude", localGPSdata.longitude);
                 JAddNumberToObject(body, "Speed", localGPSdata.speed);
-                JAddNumberToObject(body, "LightID", 1);
+                JAddNumberToObject(body, "LightID", LIGHT_ID);
             }
 
             usbSerial.println("----------------------- Waiting for Response -----------------------");

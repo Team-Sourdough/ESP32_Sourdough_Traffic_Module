@@ -5,6 +5,7 @@
 #include "../common.h"
 
 #define NOTE_PRODUCT_UID "edu.colorado.sare3396:safeguard"
+#define LIGHT_ID 1
 
 #define usbSerial Serial //Using Serial1 because Serial is taken for computer
 #define txRxPinsSerial Serial1
