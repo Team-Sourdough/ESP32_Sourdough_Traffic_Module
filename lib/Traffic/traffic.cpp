@@ -97,21 +97,25 @@ float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
 float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
       double deltaLong = DEG_TO_RADS(vehicleLong) - DEG_TO_RADS(_longitude);
       double X = cos(DEG_TO_RADS(vehicleLat)) * (sin(deltaLong));
-      double Y = cos(DEG_TO_RADS(_latitude)) * sin(DEG_TO_RADS(vehicleLat) - DEG_TO_RADS(_latitude)) * cos(DEG_TO_RADS(vehicleLat)) * cos(deltaLong);
+      double Y = cos(DEG_TO_RADS(_latitude)) * sin(DEG_TO_RADS(vehicleLat)) - sin(DEG_TO_RADS(_latitude)) * cos(DEG_TO_RADS(vehicleLat)) * cos(deltaLong);
       double bearing = atan2(X,Y);
+      Serial.print("\n\n\nBEARING: ");
+      Serial.println(bearing);
+      Serial.println("\n\n\n");
+      
       if (bearing < 0){
             bearing = (2 * M_PI) + bearing;
       }
-      if(bearing >= 5.5 || bearing < 0.78){
+      if((bearing > 0 && bearing <= (M_PI/4)) || (bearing > (7*M_PI/4) && bearing <= (2*M_PI)) ){
             return 'N';
       }
-      else if ( bearing >= 0.78 || bearing < 2.35) {
+      else if ( bearing > (M_PI/4) && bearing <= (3*M_PI/4)) {
             return 'E';
       }
-      else if (2.35 <= bearing && bearing < 3.92){
+      else if (bearing > (3*M_PI/4) && bearing <= (5*M_PI/4)){
             return 'S';
       }
-      else{
+      else if(bearing > (5*M_PI/4) && bearing <= (7*M_PI/4)){
             return 'W';
       }
 
@@ -206,8 +210,13 @@ void vTimerCallback( TimerHandle_t pxTimer ){
 
 void Traffic_Task(void* p_arg){
       //Create Intersection
-      constexpr float intersectionLatitude = 40.000113;
-      constexpr float intersectionLongitude = -105.236410;
+      // constexpr float intersectionLatitude = 40.000113;
+      // constexpr float intersectionLongitude = -105.236410;
+      //EAST:
+      // constexpr float intersectionLatitude = 40.0001200;
+      // constexpr float intersectionLongitude = -105.2356365;
+      constexpr float intersectionLatitude = 40.0064230f;
+      constexpr float intersectionLongitude = -105.2367138f;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
 
       //Create Timer
@@ -235,6 +244,10 @@ void Traffic_Task(void* p_arg){
                   //Update distance and bearing
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
                   intersection.approachVehicle.bearing = intersection.calculateBearing(DEG_TO_RADS(intersection.approachVehicle.latitude), DEG_TO_RADS(intersection.approachVehicle.longitude));
+                  Serial.print("Distance: ");
+                  Serial.println(intersection.approachVehicle.distance);
+                  Serial.print("Bearing: ");
+                  Serial.println(intersection.approachVehicle.bearing);
                   //Clear updateTrafficData flag
                   xEventGroupClearBits(rfEventGroup, updateTrafficData); 
             }
@@ -244,6 +257,7 @@ void Traffic_Task(void* p_arg){
             if(HomieValid & eventFlags){
                   switch(trafficState){
                         case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
+                              // Serial.println("Traffic: Check Threshold");
                               int threshold = intersection.getThreshold();
                               if(threshold == 0){
                                     //Set Threshold if it hasn't already been set
@@ -258,6 +272,7 @@ void Traffic_Task(void* p_arg){
                         }
                         //TODO: may need to change this logic depending on the bearing logic, relative to the car or intersection??
                         case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
+                              Serial.println("Traffic: queue light");
                               IntersectionState currentState = intersection.getCurrentState();
                               switch(intersection.approachVehicle.bearing){
                                     case 'N':
@@ -293,6 +308,7 @@ void Traffic_Task(void* p_arg){
                               break;
                         }
                         case TrafficState::SAFEGUARD:{
+                              Serial.println("Traffic: safeguard");
                               //STATE = SAFEGUARD 
                               //PEND TIMER SEMAPHORE
                               xSemaphoreTake(LightSemaphore, portMAX_DELAY);
@@ -326,6 +342,7 @@ void Traffic_Task(void* p_arg){
                               break;
                         }
                         case TrafficState::EXIT_SAFEGUARD: { //Checks that we have exited the intersection 
+                              Serial.println("Traffic: exit safeguard");
                               //TODO: Need to calculate if a vehicle is exiting before clearing the flag
                               trafficState = TrafficState::CHECK_THRESHOLD; //reset
                               xEventGroupClearBits(vehicleID_Valid, HomieValid);
