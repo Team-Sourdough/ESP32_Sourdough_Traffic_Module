@@ -60,7 +60,7 @@ void Cellular_Send(Notecard *NOTE) {
     // Make local copy of received GPS data
     GPSdata localGPSdata;
     localGPSdata.latitude = vehicleData.latitude;
-    localGPSdata.longitude = vehicleData.latitude;
+    localGPSdata.longitude = vehicleData.longitude;
     localGPSdata.speed = vehicleData.speed;
     localGPSdata.vehicle_id = vehicleData.vehicle_id;
 

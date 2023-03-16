@@ -94,14 +94,11 @@ float Intersection::calculateDistance(float vehicleLat, float vehicleLong) {
 }
 
 //TODO: finish converting to our needs
-float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
+char Intersection::calculateBearing(float vehicleLat, float vehicleLong){
       double deltaLong = DEG_TO_RADS(vehicleLong) - DEG_TO_RADS(_longitude);
       double X = cos(DEG_TO_RADS(vehicleLat)) * (sin(deltaLong));
       double Y = cos(DEG_TO_RADS(_latitude)) * sin(DEG_TO_RADS(vehicleLat)) - sin(DEG_TO_RADS(_latitude)) * cos(DEG_TO_RADS(vehicleLat)) * cos(deltaLong);
       double bearing = atan2(X,Y);
-      Serial.print("\n\n\nBEARING: ");
-      Serial.println(bearing);
-      Serial.println("\n\n\n");
       
       if (bearing < 0){
             bearing = (2 * M_PI) + bearing;
@@ -118,37 +115,6 @@ float Intersection::calculateBearing(float vehicleLat, float vehicleLong){
       else if(bearing > (5*M_PI/4) && bearing <= (7*M_PI/4)){
             return 'W';
       }
-
-      //Chapt gpt bearing ranges in degrees
-//           if (bearing < 0) {
-//         bearing += 360.0;
-//     }
-
-//     if ((bearing >= 0 && bearing <= 22.5) || (bearing > 337.5 && bearing <= 360)) {
-//         return "north";
-//     }
-//     else if (bearing > 22.5 && bearing <= 67.5) {
-//         return "northeast";
-//     }
-//     else if (bearing > 67.5 && bearing <= 112.5) {
-//         return "east";
-//     }
-//     else if (bearing > 112.5 && bearing <= 157.5) {
-//         return "southeast";
-//     }
-//     else if (bearing > 157.5 && bearing <= 202.5) {
-//         return "south";
-//     }
-//     else if (bearing > 202.5 && bearing <= 247.5) {
-//         return "southwest";
-//     }
-//     else if (bearing > 247.5 && bearing <= 292.5) {
-//         return "west";
-//     }
-//     else if (bearing > 292.5 && bearing <= 337.5) {
-//         return "northwest";
-//     }
-// }
 }
 
 void Intersection::setThreshold(){
@@ -210,13 +176,8 @@ void vTimerCallback( TimerHandle_t pxTimer ){
 
 void Traffic_Task(void* p_arg){
       //Create Intersection
-      // constexpr float intersectionLatitude = 40.000113;
-      // constexpr float intersectionLongitude = -105.236410;
-      //EAST:
-      // constexpr float intersectionLatitude = 40.0001200;
-      // constexpr float intersectionLongitude = -105.2356365;
-      constexpr float intersectionLatitude = 40.0064230f;
-      constexpr float intersectionLongitude = -105.2367138f;
+      constexpr float intersectionLatitude = 40.000113;
+      constexpr float intersectionLongitude = -105.236410;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
 
       //Create Timer
@@ -243,11 +204,11 @@ void Traffic_Task(void* p_arg){
 
                   //Update distance and bearing
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
-                  intersection.approachVehicle.bearing = intersection.calculateBearing(DEG_TO_RADS(intersection.approachVehicle.latitude), DEG_TO_RADS(intersection.approachVehicle.longitude));
-                  Serial.print("Distance: ");
-                  Serial.println(intersection.approachVehicle.distance);
-                  Serial.print("Bearing: ");
-                  Serial.println(intersection.approachVehicle.bearing);
+                  intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
+                  // Serial.print("Distance: ");
+                  // Serial.println(intersection.approachVehicle.distance);
+                  // Serial.print("Bearing: ");
+                  // Serial.println(intersection.approachVehicle.bearing);
                   //Clear updateTrafficData flag
                   xEventGroupClearBits(rfEventGroup, updateTrafficData); 
             }
@@ -259,6 +220,8 @@ void Traffic_Task(void* p_arg){
                         case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
                               // Serial.println("Traffic: Check Threshold");
                               int threshold = intersection.getThreshold();
+                              // Serial.print("THRESHOLD");
+                              // Serial.println(threshold);
                               if(threshold == 0){
                                     //Set Threshold if it hasn't already been set
                                     intersection.setThreshold();

@@ -94,7 +94,7 @@ class Intersection {
         void cycleToRed(uint32_t transitionTime, IntersectionState newState);
         void updateTransitionInfo(); //threshold (m/s), cycletime (ms)
         float calculateDistance(float vehicleLat, float vehicleLong);
-        float calculateBearing(float vehicleLat, float vehicleLong);
+        char calculateBearing(float vehicleLat, float vehicleLong);
         void changeTrafficDirection();
         void holdCurrentDirection(); //TODO: Implement
 
