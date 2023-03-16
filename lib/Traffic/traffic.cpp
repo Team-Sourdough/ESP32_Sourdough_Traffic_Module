@@ -114,6 +114,8 @@ char Intersection::calculateBearing(float vehicleLat, float vehicleLong){
       }
       else if(bearing > (5*M_PI/4) && bearing <= (7*M_PI/4)){
             return 'W';
+      }else{
+            return 'U'; //For UNKNOWN
       }
 }
 
