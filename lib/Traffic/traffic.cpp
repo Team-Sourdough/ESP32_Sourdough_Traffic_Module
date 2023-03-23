@@ -228,6 +228,7 @@ void Traffic_Task(void* p_arg){
                                     //Set Threshold if it hasn't already been set
                                     intersection.setThreshold();
                               }
+                              vehicleData.threshold = threshold;
                               //Check current distance against threshold
                               if(intersection.approachVehicle.distance <= threshold){
                                     //Start light cycle transisiton

@@ -36,6 +36,7 @@ struct Vehicle_Info{
     char bearing;
     float speed;
     uint16_t vehicle_id;
+    float threshold;
 };
 
 //We want all the tasks to be able to access this because this is shared data among the 3 tasks

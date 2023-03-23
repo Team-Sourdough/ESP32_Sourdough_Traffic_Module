@@ -63,6 +63,9 @@ void Cellular_Send(Notecard *NOTE) {
     localGPSdata.longitude = vehicleData.longitude;
     localGPSdata.speed = vehicleData.speed;
     localGPSdata.vehicle_id = vehicleData.vehicle_id;
+    localGPSdata.distance = vehicleData.distance;
+    localGPSdata.bearing = vehicleData.bearing;
+    localGPSdata.threshold = vehicleData.threshold;
 
     // Start sending data to server
     J *rsp = NULL;
@@ -84,6 +87,9 @@ void Cellular_Send(Notecard *NOTE) {
                 JAddNumberToObject(body, "Longitude", localGPSdata.longitude);
                 JAddNumberToObject(body, "Speed", localGPSdata.speed);
                 JAddNumberToObject(body, "LightID", LIGHT_ID);
+                JAddNumberToObject(body, "Distance", localGPSdata.distance);
+                JAddNumberToObject(body, "Threshold", localGPSdata.threshold);
+                JAddNumberToObject(body, "Bearing", localGPSdata.bearing);
             }
 
             usbSerial.println("----------------------- Waiting for Response -----------------------");
