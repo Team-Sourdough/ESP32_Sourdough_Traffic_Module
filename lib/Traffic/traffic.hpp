@@ -33,7 +33,7 @@ std::unique_ptr<T> make_unique(Args&&... args) {
 #define OFF(light) digitalWrite(light, LOW);
 
 #define SPEED_LIMIT 50
-#define SAFETY_FACTOR 2 //200% of min threshold will be added 
+#define SAFETY_FACTOR 4 //200% of min threshold will be added 
 
 enum class SpeedLimitCycleTime { //Times in ms
     THIRTY_FIVE_MPH = 3000,
