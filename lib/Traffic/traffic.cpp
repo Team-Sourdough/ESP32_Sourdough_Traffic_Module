@@ -181,7 +181,8 @@ void Traffic_Task(void* p_arg){
       constexpr float intersectionLatitude = 40.000113;
       constexpr float intersectionLongitude = -105.236410;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
-
+      float previousDistance{0.0f};
+      uint32_t exitVerifyCounter{0}, approachVerifyCounter{0};
       //Create Timer
       LightTimer =  CreateTimer();
       LightSemaphore = xSemaphoreCreateBinary();
@@ -203,7 +204,7 @@ void Traffic_Task(void* p_arg){
                   };
                   //Release Mutex
                   xSemaphoreGive(vehicleDataMutex);
-
+                  previousDistance = intersection.approachVehicle.distance;
                   //Update distance and bearing
                   intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
                   intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
@@ -220,21 +221,27 @@ void Traffic_Task(void* p_arg){
             if(HomieValid & eventFlags){
                   switch(trafficState){
                         case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
-                              // Serial.println("Traffic: Check Threshold");
-                              int threshold = intersection.getThreshold();
-                              // Serial.print("THRESHOLD");
-                              // Serial.println(threshold);
-                              if(threshold == 0){
-                                    //Set Threshold if it hasn't already been set
-                                    intersection.setThreshold();
+                              if(previousDistance > intersection.approachVehicle.distance){
+                                    approachVerifyCounter++;
                               }
-                              vehicleData.threshold = threshold;
-                              //Check current distance against threshold
-                              if(intersection.approachVehicle.distance <= threshold){
-                                    //Start light cycle transisiton
-                                    trafficState = TrafficState::QUEUE_LIGHT;
+                              if(approachVerifyCounter >= 3){
+                                    // Serial.println("Traffic: Check Threshold");
+                                    int threshold = intersection.getThreshold();
+                                    // Serial.print("THRESHOLD");
+                                    // Serial.println(threshold);
+                                    if(threshold == 0){
+                                          //Set Threshold if it hasn't already been set
+                                          intersection.setThreshold();
+                                    }
+                                    vehicleData.threshold = threshold;
+                                    //Check current distance against threshold
+                                    if(intersection.approachVehicle.distance <= threshold){
+                                          approachVerifyCounter = 0;
+                                          //Start light cycle transisiton
+                                          trafficState = TrafficState::QUEUE_LIGHT;
+                                    }
+                                    break;
                               }
-                              break;
                         }
                         //TODO: may need to change this logic depending on the bearing logic, relative to the car or intersection??
                         case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
@@ -309,9 +316,14 @@ void Traffic_Task(void* p_arg){
                         }
                         case TrafficState::EXIT_SAFEGUARD: { //Checks that we have exited the intersection 
                               Serial.println("Traffic: exit safeguard");
-                              //TODO: Need to calculate if a vehicle is exiting before clearing the flag
-                              trafficState = TrafficState::CHECK_THRESHOLD; //reset
-                              xEventGroupClearBits(vehicleID_Valid, HomieValid);
+                              if(previousDistance < intersection.approachVehicle.distance){
+                                    exitVerifyCounter++;
+                              }
+                              if(exitVerifyCounter >= 3){
+                                    exitVerifyCounter = 0;
+                                    trafficState = TrafficState::CHECK_THRESHOLD; //reset
+                                    xEventGroupClearBits(vehicleID_Valid, HomieValid);
+                              }
                         }
                   }
                               
