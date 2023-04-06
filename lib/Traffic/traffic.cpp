@@ -181,7 +181,7 @@ void Traffic_Task(void* p_arg){
       constexpr float intersectionLatitude = 40.000113;
       constexpr float intersectionLongitude = -105.236410;
       static Intersection intersection(IntersectionState::NORTH_SOUTH, intersectionLatitude, intersectionLongitude); //only create once
-      float previousDistance{0.0f};
+      float previousDistance{0.0f}, maxSpeed{0.0f};
       uint32_t exitVerifyCounter{0}, approachVerifyCounter{0};
       //Create Timer
       LightTimer =  CreateTimer();
@@ -229,11 +229,17 @@ void Traffic_Task(void* p_arg){
                                     int threshold = intersection.getThreshold();
                                     // Serial.print("THRESHOLD");
                                     // Serial.println(threshold);
-                                    if(threshold == 0){
+                                    bool speedIncreased = false;
+                                    if(maxSpeed < intersection.approachVehicle.speed){
+                                          maxSpeed = intersection.approachVehicle.speed;
+                                          speedIncreased = true;
+                                    }
+                                    if(threshold == 0 || speedIncreased){
                                           //Set Threshold if it hasn't already been set
                                           intersection.setThreshold();
+                                          speedIncreased = false;
                                     }
-                                    vehicleData.threshold = threshold;
+                                    vehicleData.threshold = intersection.getThreshold();
                                     //Check current distance against threshold
                                     if(intersection.approachVehicle.distance <= threshold){
                                           approachVerifyCounter = 0;
