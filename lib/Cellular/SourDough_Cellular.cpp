@@ -150,6 +150,6 @@ void Cellular_Task(void* p_arg){
             Cellular_Send(&NOTE);
         }
 
-        delay(10000);
+        delay(1000);
     }
 }
