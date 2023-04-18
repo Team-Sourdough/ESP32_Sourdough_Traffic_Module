@@ -187,7 +187,7 @@ void Traffic_Task(void* p_arg){
       LightSemaphore = xSemaphoreCreateBinary();
 
       EventBits_t eventFlags;
-      TrafficState trafficState{TrafficState::CHECK_THRESHOLD}; //Check threshold first
+      TrafficState trafficState{TrafficState::QUEUE_LIGHT}; //Check threshold first
       while(1){ //Fatty state machine
             
             eventFlags = xEventGroupWaitBits(rfEventGroup, (updateTrafficData | HomieValid), pdFALSE, pdFALSE, portMAX_DELAY);
@@ -205,8 +205,8 @@ void Traffic_Task(void* p_arg){
                   xSemaphoreGive(vehicleDataMutex);
 
                   //Update distance and bearing
-                  intersection.approachVehicle.distance = intersection.calculateDistance(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
-                  intersection.approachVehicle.bearing = intersection.calculateBearing(intersection.approachVehicle.latitude, intersection.approachVehicle.longitude);
+                  intersection.approachVehicle.distance = 0;
+                  intersection.approachVehicle.bearing = 'W';
                   // Serial.print("Distance: ");
                   // Serial.println(intersection.approachVehicle.distance);
                   // Serial.print("Bearing: ");
@@ -216,61 +216,12 @@ void Traffic_Task(void* p_arg){
             }
 
             //Wait on homie valid (verified by Cellular)
-            //TODO: NEED A WAY TO VERIFY IF VEHICLE IS APPROACHING OR EXITING
             if(HomieValid & eventFlags){
                   switch(trafficState){
-                        case TrafficState::CHECK_THRESHOLD: { //Check that vehicle has crossed a distance threshold
-                              // Serial.println("Traffic: Check Threshold");
-                              int threshold = intersection.getThreshold();
-                              // Serial.print("THRESHOLD");
-                              // Serial.println(threshold);
-                              if(threshold == 0){
-                                    //Set Threshold if it hasn't already been set
-                                    intersection.setThreshold();
-                              }
-                              vehicleData.threshold = threshold;
-                              //Check current distance against threshold
-                              if(intersection.approachVehicle.distance <= threshold){
-                                    //Start light cycle transisiton
-                                    trafficState = TrafficState::QUEUE_LIGHT;
-                              }
-                              break;
-                        }
                         //TODO: may need to change this logic depending on the bearing logic, relative to the car or intersection??
                         case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
                               Serial.println("Traffic: queue light");
-                              IntersectionState currentState = intersection.getCurrentState();
-                              switch(intersection.approachVehicle.bearing){
-                                    case 'N':
-                                    case 'S':
-                                          if(currentState == IntersectionState::EAST_WEST){
-                                                //Need to change to a N/S configuration
-                                                intersection.changeTrafficDirection();
-                                          }else if(currentState == IntersectionState::NORTH_SOUTH){
-                                                intersection.holdCurrentDirection();
-                                          }else{
-                                                Serial.println("UNKNOWN intersection state");
-                                                break;
-                                          }
-                                          trafficState = TrafficState::SAFEGUARD;
-                                          break;
-                                    case 'E':
-                                    case 'W':
-                                          if(currentState == IntersectionState::NORTH_SOUTH){
-                                                //Need to change to a E/W configuration
-                                                intersection.changeTrafficDirection();
-                                          }else if(currentState == IntersectionState::EAST_WEST){
-                                                intersection.holdCurrentDirection();
-                                          }else{
-                                               Serial.println("UNKNOWN intersection state"); 
-                                               break;
-                                          }
-                                          trafficState = TrafficState::SAFEGUARD;
-                                          break;
-                                    default:
-                                          Serial.println("Unknown vehicle bearing");
-                                          break;
-                              }
+                              intersection.changeTrafficDirection();
                               break;
                         }
                         case TrafficState::SAFEGUARD:{
@@ -310,8 +261,9 @@ void Traffic_Task(void* p_arg){
                         case TrafficState::EXIT_SAFEGUARD: { //Checks that we have exited the intersection 
                               Serial.println("Traffic: exit safeguard");
                               //TODO: Need to calculate if a vehicle is exiting before clearing the flag
-                              trafficState = TrafficState::CHECK_THRESHOLD; //reset
+                              trafficState = TrafficState::QUEUE_LIGHT; //reset
                               xEventGroupClearBits(vehicleID_Valid, HomieValid);
+                              break;
                         }
                   }
                               
