@@ -123,7 +123,7 @@ void Cellular_Send(Notecard *NOTE) {
                 return;
             }
 
-            delay(20000);
+            delay(1000);
             }
     }
     return;
