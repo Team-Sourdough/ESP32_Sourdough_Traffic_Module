@@ -20,7 +20,7 @@ struct GPSdata{
     float longitude;
     float speed;
     float threshold;
-    char bearing;
+    char* bearing;
     float distance;
     uint16_t vehicle_id;
 };

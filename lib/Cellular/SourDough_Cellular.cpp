@@ -64,7 +64,7 @@ void Cellular_Send(Notecard *NOTE) {
     localGPSdata.speed = vehicleData.speed;
     localGPSdata.vehicle_id = vehicleData.vehicle_id;
     localGPSdata.distance = vehicleData.distance;
-    localGPSdata.bearing = vehicleData.bearing;
+    localGPSdata.bearing = &vehicleData.bearing;
     localGPSdata.threshold = vehicleData.threshold;
 
     // Start sending data to server
@@ -89,10 +89,10 @@ void Cellular_Send(Notecard *NOTE) {
                 JAddNumberToObject(body, "LightID", LIGHT_ID);
                 JAddNumberToObject(body, "Distance", localGPSdata.distance);
                 JAddNumberToObject(body, "Threshold", localGPSdata.threshold);
-                JAddNumberToObject(body, "Bearing", localGPSdata.bearing);
+                JAddStringToObject(body, "Bearing", localGPSdata.bearing);
             }
 
-            usbSerial.println("----------------------- Waiting for Response -----------------------");
+            //usbSerial.println("----------------------- Waiting for Response -----------------------");
             rsp = NoteRequestResponse(req);
             rsp_body = JGetObjectItem(rsp, "result");
             json_body = JPrintUnformatted(rsp_body);
@@ -103,27 +103,27 @@ void Cellular_Send(Notecard *NOTE) {
             if(!strcmp(json_body,"200")) {
                 if(!eventFlags){
                     xEventGroupSetBits(rfEventGroup, HomieValid);
-                    usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
-                    usbSerial.println(json_body);
+                    //usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
+                    //usbSerial.println(json_body);
                     xEventGroupClearBits(rfEventGroup,updateCellData);
                     return;
                 }
                 else{
-                    usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
-                    usbSerial.println(json_body);
+                    //usbSerial.print("VERFIED VEHICLE FOUND! Set Valid flag");
+                    //usbSerial.println(json_body);
                     xEventGroupClearBits(rfEventGroup,updateCellData);
                     return;
                 }
             }
             // InValid Vehicle
             else if(!strcmp(json_body,"500")) {
-                usbSerial.print("INVALID VEHICLE! Response: ");
-                usbSerial.println(json_body);
+                //usbSerial.print("INVALID VEHICLE! Response: ");
+                //usbSerial.println(json_body);
                 xEventGroupClearBits(rfEventGroup,updateCellData);
                 return;
             }
 
-            delay(20000);
+            delay(3000);
             }
     }
     return;
@@ -139,12 +139,12 @@ void Cellular_Task(void* p_arg){
     
     while(1){
 
-        Serial.println("BEFORE WAIT");
-        Serial.println(eventFlags);
+        //Serial.println("BEFORE WAIT");
+        //Serial.println(eventFlags);
 
         eventFlags = xEventGroupWaitBits(rfEventGroup, updateCellData, pdFALSE, pdFALSE, portMAX_DELAY);
-        Serial.println("AFTER WAIT");
-        Serial.println(eventFlags);
+        //Serial.println("AFTER WAIT");
+        //Serial.println(eventFlags);
 
         if(eventFlags){
             Cellular_Send(&NOTE);

@@ -171,7 +171,7 @@ void Intersection::holdCurrentDirection(){
 }
 
 void vTimerCallback( TimerHandle_t pxTimer ){
-      Serial.println("Ay my slime I'm in the callback!!!!");
+      //Serial.println("Ay my slime I'm in the callback!!!!");
       xSemaphoreGive(LightSemaphore);
 }
 
@@ -205,8 +205,9 @@ void Traffic_Task(void* p_arg){
                   xSemaphoreGive(vehicleDataMutex);
 
                   //Update distance and bearing
-                  intersection.approachVehicle.distance = 0;
-                  intersection.approachVehicle.bearing = 'W';
+                  vehicleData.distance = intersection.calculateDistance(vehicleData.latitude, vehicleData.longitude);
+                  vehicleData.bearing = 'E';
+                  vehicleData.threshold = 600;
                   // Serial.print("Distance: ");
                   // Serial.println(intersection.approachVehicle.distance);
                   // Serial.print("Bearing: ");
