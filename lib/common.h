@@ -12,7 +12,7 @@
 MessageBufferHandle_t xMessageBuffer;
 
 const size_t xMessageBufferSizeBytes = 30;
-const int DataBufferSize = 14;
+const int DataBufferSize = 15;
 const int RecieveBufferSize = 4;
 
 const TickType_t x100ms = pdMS_TO_TICKS( 100 );
@@ -37,6 +37,7 @@ struct Vehicle_Info{
     float speed;
     uint16_t vehicle_id;
     float threshold;
+    uint8_t transition;
 };
 
 //We want all the tasks to be able to access this because this is shared data among the 3 tasks

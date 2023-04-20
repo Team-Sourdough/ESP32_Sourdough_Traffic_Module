@@ -150,7 +150,7 @@ void Intersection::cycleToRed(uint32_t transitionTime, IntersectionState newStat
 }
 
 void Intersection::changeTrafficDirection(){
-      SpeedLimitCycleTime cycleTime = getCycleTime();
+      uint32_t cycleTime = 5000;
       switch(_currentState){
             case IntersectionState::NORTH_SOUTH:
             cycleToRed(static_cast<uint32_t>(cycleTime), IntersectionState::NORTH_SOUTH);
@@ -212,16 +212,17 @@ void Traffic_Task(void* p_arg){
                   // Serial.print("Bearing: ");
                   // Serial.println(intersection.approachVehicle.bearing);
                   //Clear updateTrafficData flag
-                  xEventGroupClearBits(rfEventGroup, updateTrafficData); 
-            }
+                  // xEventGroupClearBits(rfEventGroup, updateTrafficData); 
 
             //Wait on homie valid (verified by Cellular)
-            if(HomieValid & eventFlags){
                   switch(trafficState){
-                        //TODO: may need to change this logic depending on the bearing logic, relative to the car or intersection??
                         case TrafficState::QUEUE_LIGHT:{ //Queue a light change based on its bearing (heading direction)
-                              Serial.println("Traffic: queue light");
-                              intersection.changeTrafficDirection();
+                              //Serial.println(vehicleData.transition);
+                              if(vehicleData.transition == 1){
+                                    Serial.println("Traffic: queue light");
+                                    intersection.changeTrafficDirection();
+                                    trafficState = TrafficState::SAFEGUARD;
+                              }
                               break;
                         }
                         case TrafficState::SAFEGUARD:{
@@ -262,7 +263,7 @@ void Traffic_Task(void* p_arg){
                               Serial.println("Traffic: exit safeguard");
                               //TODO: Need to calculate if a vehicle is exiting before clearing the flag
                               trafficState = TrafficState::QUEUE_LIGHT; //reset
-                              xEventGroupClearBits(vehicleID_Valid, HomieValid);
+                              xEventGroupClearBits(rfEventGroup, updateTrafficData); 
                               break;
                         }
                   }

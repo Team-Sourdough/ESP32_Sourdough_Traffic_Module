@@ -58,6 +58,7 @@ void ParseBuffer(uint8_t buffer[], Vehicle_Info* result) {
   offset += sizeof(result->speed);
   memcpy((&result->vehicle_id), buffer + offset, sizeof(result->vehicle_id));
   offset += sizeof(result->vehicle_id);
+  memcpy((&result->transition), buffer + offset, sizeof(result->transition));
   xSemaphoreGive(vehicleDataMutex);
   //Set the cell data and traffic data bits. Alerts the traffic module
   xEventGroupSetBits(rfEventGroup, (rfEventFlagsEnum::updateCellData | rfEventFlagsEnum::updateTrafficData));
